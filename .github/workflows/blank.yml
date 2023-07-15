@@ -29,12 +29,12 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
+      # - uses: actions/cache@v3
+      #   with:
+      #     path: |
+      #       ~/.cache/pip
+      #       ~/.platformio/.cache
+      #     key: ${{ runner.os }}-pio
 
       - name: Set up Python
         uses: actions/setup-python@v3
