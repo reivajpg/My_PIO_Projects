@@ -1,0 +1,65 @@
+name: Build 
+
+on: [push]
+
+jobs:
+  build:
+    
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        example:
+          - "examples/arduino-blink"
+#          - "examples/arduino-external-libs"
+        var: [arduino-blink arduino-external-libs]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - run: mkdir -p ${{matrix.example}}/.pio/build/pico/
+
+      - run: echo hello > ${{matrix.example}}/.pio/build/pico/world.txt
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+
+
+      - name: Install dependencies
+        run: |
+          pip install -U https://github.com/platformio/platformio/archive/develop.zip
+          pio pkg install --global --platform symlink://.
+
+
+      - name: Build examples
+        run: |
+          pio run -d ${{ matrix.example }}
+
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v3
+#        with:
+#            name: ${{matrix.var}}
+#            path: ${{matrix.example}}/.pio/build/pico/firmware.uf2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+            name: build_out
+            path: ${{matrix.example}}/.pio/build/pico/
+
+      - name: Display structure of downloaded files
+        run: ls -R
+        working-directory: ${{matrix.example}}/.pio/build/pico/
