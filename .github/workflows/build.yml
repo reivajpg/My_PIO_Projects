@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -U https://github.com/platformio/platformio/archive/develop.zip
-          pio pkg install --global --platform symlink://.
+          pio pkg install --global --platform
 
 
       - name: Build examples
