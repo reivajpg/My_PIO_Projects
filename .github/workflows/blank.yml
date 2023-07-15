@@ -24,10 +24,10 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - "examples/arduino-blink"
-#          - "examples/arduino-blink_rgb"
+#          - "examples/arduino-blink"
+          - "examples/arduino-blink_rgb"
 #          - "examples/arduino-external-libs"
-        var: [arduino-blink]
+        var: [arduino-blink_rgb]
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
