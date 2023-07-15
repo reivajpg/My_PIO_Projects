@@ -25,9 +25,9 @@ jobs:
       matrix:
         example:
           - "examples/arduino-blink"
-          - "examples/arduino-blink_rgb"
+#          - "examples/arduino-blink_rgb"
 #          - "examples/arduino-external-libs"
-        var: [arduino-blink_rgb]
+        var: [arduino-blink]
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -64,7 +64,7 @@ jobs:
       - name: Save and Push Build
         run: |
           mkdir -p out/
-          mv -b ${{matrix.example}}/.pio/build/pico/firmware.uf2 out/${{matrix.example}}.firmware.uf2
+          mv -b ${{matrix.example}}/.pio/build/pico/firmware.uf2 out/${{matrix.var}}.firmware.uf2
           ls -Rlh out/
           git config user.name github-actions
           git config user.email github-actions@github.com
