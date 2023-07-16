@@ -46,7 +46,8 @@ jobs:
         with:
           path: |
             ~/.cache/pip
-            ~/.platformio/.cache
+            ~/.platformio
+            ~/work/My_PIO_Projects/My_PIO_Projects/examples/*/.pio
           key: ${{ runner.os }}-pio
 
       - name: Set up Python
@@ -65,7 +66,7 @@ jobs:
 
       - name: Save and Push Build
         run: |
-          mkdir -p out/
+          mkdir -p out/${{matrix.var}}/
           mv -b ${{matrix.example}}/.pio/build/*/firmware.* out/${{matrix.var}}/
           ls -Rlh out/
           git config user.name github-actions
