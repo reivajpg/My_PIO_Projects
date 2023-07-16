@@ -56,8 +56,8 @@
 extern const char index_html[];
 extern const char main_js[];
 
-#define WIFI_SSID "YOURSSID"
-#define WIFI_PASSWORD "YOURPASSWORD"
+#define WIFI_SSID "MiFibra-A8D0"
+#define WIFI_PASSWORD "L39QjzXV"
 
 //#define STATIC_IP                       // uncomment for static IP, set IP below
 #ifdef STATIC_IP
@@ -71,7 +71,7 @@ extern const char main_js[];
 #define max(a,b) ((a)>(b)?(a):(b))
 
 #define LED_PIN 2                       // 0 = GPIO0, 2=GPIO2
-#define LED_COUNT 24
+#define LED_COUNT 1//24
 
 #define WIFI_TIMEOUT 30000              // checks WiFi every ...ms. Reset after this time, if WiFi cannot reconnect.
 #define HTTP_PORT 80
