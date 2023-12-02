@@ -26,7 +26,7 @@ jobs:
       matrix:
         example:
 #          - "/*/WLED"
-          - "/*/esp8266_webinterface"
+          - "*/esp8266_webinterface"
 #          - "forms_led"
 #          - "arduino-blink"
 #          - "arduino-blink_rgb"
