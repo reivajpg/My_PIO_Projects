@@ -26,7 +26,7 @@ jobs:
       matrix:
         example:
           - "WLED"
-#          - "esp8266_webinterface"
+          - "esp8266_webinterface"
 #          - "forms_led"
 #          - "arduino-blink"
 #          - "arduino-blink_rgb"
@@ -69,13 +69,13 @@ jobs:
 
       - name: Save and Push Build
         run: |
-          mkdir -p Projects/${{matrix.example}}/out/
-          mv -b Projects/${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
-          ls -Rlh Projects/${{matrix.example}}/out/
+          mkdir -p ${{matrix.example}}/out/
+          mv -b ${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
+          ls -Rlh ${{matrix.example}}/out/
           git config user.name github-actions
           git config user.email github-actions@github.com
           if git diff --exit-code; then
-             git add Projects/${{matrix.example}}/out/
+             git add ${{matrix.example}}/out/
              git commit -am "GH Action Files added $(date)"
              git push 
           fi
