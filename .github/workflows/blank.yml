@@ -49,7 +49,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio
-#            ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
+            ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
             ~/Projects/*/.pio
           key: ${{ runner.os }}-pio
 
@@ -63,7 +63,7 @@ jobs:
           pip install --upgrade platformio
           pio --version
 
-      - name: Build examples
+      - name: Build Project
         run: |
           pio run -d Projects/${{ matrix.example}}
 
