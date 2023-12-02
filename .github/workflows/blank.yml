@@ -25,11 +25,11 @@ jobs:
       matrix:
         example:
           - "WLED"
-          - "esp8266_webinterface"
-          - "forms_led"
-          - "arduino-blink"
-          - "arduino-blink_rgb"
-          - "arduino-external-libs"
+#          - "esp8266_webinterface"
+#          - "forms_led"
+#          - "arduino-blink"
+#          - "arduino-blink_rgb"
+#          - "arduino-external-libs"
 #        var: [WLED]
     
 
@@ -68,7 +68,7 @@ jobs:
       - name: Save and Push Build
         run: |
           mkdir -p Projects/${{matrix.example}}/out/
-          mv -b ${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
+          mv -b Projects/${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
           ls -Rlh out/
           git config user.name github-actions
           git config user.email github-actions@github.com
