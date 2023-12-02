@@ -22,15 +22,14 @@ jobs:
 
     strategy:
       fail-fast: false
-#      path: ~/work/My_PIO_Projects/My_PIO_Projects/Projects/
       matrix:
         example:
-#          - "/*/WLED"
+#          - "*/WLED"
           - "*/esp8266_webinterface"
-#          - "forms_led"
-#          - "arduino-blink"
-#          - "arduino-blink_rgb"
-#          - "arduino-external-libs"
+#          - "*/forms_led"
+#          - "*/arduino-blink"
+#          - "*/arduino-blink_rgb"
+#          - "*/arduino-external-libs"
 #        var: [WLED]
     
 
@@ -51,7 +50,7 @@ jobs:
             ~/.platformio
             ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
             ~/Projects/*/.pio
-          key: ${{ runner.os }}-pio
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }} #${{ runner.os }}-pio
 
       - name: Set up Python
         uses: actions/setup-python@v4
