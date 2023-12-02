@@ -50,6 +50,7 @@ jobs:
             ~/.cache/pip
             ~/.platformio
             ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
+            ~/Projects/*/.pio
           key: ${{ runner.os }}-pio
 
       - name: Set up Python
@@ -74,7 +75,7 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           if git diff --exit-code; then
-             git add out/
+             git add Projects/${{matrix.example}}/out/
              git commit -am "GH Action Files added $(date)"
              git push 
           fi
