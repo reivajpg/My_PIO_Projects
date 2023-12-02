@@ -25,7 +25,7 @@ jobs:
       matrix:
         example:
           - "Projects/WLED"
-            - "examples/esp8266_webinterface"
+#          - "examples/esp8266_webinterface"
 #          - "examples/forms_led"
 #          - "examples/arduino-blink"
 #          - "examples/arduino-blink_rgb"
