@@ -24,13 +24,13 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - "Projects/WLED"
-#          - "examples/esp8266_webinterface"
-#          - "examples/forms_led"
-#          - "examples/arduino-blink"
-#          - "examples/arduino-blink_rgb"
-#          - "examples/arduino-external-libs"
-        var: [WLED]
+          - "WLED"
+          - "esp8266_webinterface"
+          - "forms_led"
+          - "arduino-blink"
+          - "arduino-blink_rgb"
+          - "arduino-external-libs"
+#        var: [WLED]
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -63,12 +63,12 @@ jobs:
 
       - name: Build examples
         run: |
-          pio run -d ${{ matrix.example }}
+          pio run -d Project/${{ matrix.example}}
 
       - name: Save and Push Build
         run: |
-          mkdir -p out/${{matrix.var}}/
-          mv -b ${{matrix.example}}/.pio/build/*/firmware.* out/${{matrix.var}}/
+          mkdir -p out/${{matrix.example}}/
+          mv -b ${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/
           ls -Rlh out/
           git config user.name github-actions
           git config user.email github-actions@github.com
