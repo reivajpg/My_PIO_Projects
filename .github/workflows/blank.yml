@@ -63,7 +63,7 @@ jobs:
 
       - name: Build examples
         run: |
-          pio run -d Project/${{ matrix.example}}
+          pio run -d Projects/${{ matrix.example}}
 
       - name: Save and Push Build
         run: |
