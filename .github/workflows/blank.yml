@@ -25,12 +25,12 @@ jobs:
       matrix:
         example:
           - "Projects/WLED"
-#          - "examples/esp8266_webinterface"
-#          - "examples/forms_led"
+          - "Projects/esp8266_webinterface"
+          - "Projects/forms_led"
 #          - "examples/arduino-blink"
 #          - "examples/arduino-blink_rgb"
 #          - "examples/arduino-external-libs"
-        var: [WLED]
+        var: ${{matrix.example}}
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
