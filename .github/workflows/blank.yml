@@ -25,7 +25,7 @@ jobs:
 #      path: ~/work/My_PIO_Projects/My_PIO_Projects/Projects/
       matrix:
         example:
-          - "WLED"
+#          - "WLED"
           - "esp8266_webinterface"
 #          - "forms_led"
 #          - "arduino-blink"
