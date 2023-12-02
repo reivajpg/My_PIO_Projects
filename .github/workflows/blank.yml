@@ -22,6 +22,7 @@ jobs:
 
     strategy:
       fail-fast: false
+#      path: ~/work/My_PIO_Projects/My_PIO_Projects/Projects/
       matrix:
         example:
           - "WLED"
@@ -69,7 +70,7 @@ jobs:
         run: |
           mkdir -p Projects/${{matrix.example}}/out/
           mv -b Projects/${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
-          ls -Rlh out/
+          ls -Rlh Projects/${{matrix.example}}/out/
           git config user.name github-actions
           git config user.email github-actions@github.com
           if git diff --exit-code; then
