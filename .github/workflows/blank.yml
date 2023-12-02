@@ -65,12 +65,12 @@ jobs:
 
       - name: Build Project
         run: |
-          pio run -d Projects/${{ matrix.example}}
+          pio run -d ${{ matrix.example}}
 
       - name: Save and Push Build
         run: |
           mkdir -p ${{matrix.example}}/out/
-          mv -b ${{matrix.example}}/.pio/build/*/firmware.* Projects/${{matrix.example}}/out/
+          mv -b ${{matrix.example}}/.pio/build/*/firmware.* ${{matrix.example}}/out/
           ls -Rlh ${{matrix.example}}/out/
           git config user.name github-actions
           git config user.email github-actions@github.com
