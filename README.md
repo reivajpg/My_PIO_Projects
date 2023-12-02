@@ -1,2 +1,2 @@
 # My_PlatformIO_Projects
- Repo con las compilaciones de mis proyectos de electronica
+ Repositorio con las compilaciones de mis proyectos de electrónica

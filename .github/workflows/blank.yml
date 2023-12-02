@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: PlatformIO CI
 
 # Controls when the workflow will run
 on:
@@ -24,12 +24,13 @@ jobs:
       fail-fast: false
       matrix:
         example:
-          - "examples/esp8266_webinterface"
+          - "Projects/WLED"
+            - "examples/esp8266_webinterface"
 #          - "examples/forms_led"
 #          - "examples/arduino-blink"
 #          - "examples/arduino-blink_rgb"
 #          - "examples/arduino-external-libs"
-        var: [esp8266_webinterface]
+        var: [WLED]
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -47,7 +48,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio
-            ~/work/My_PIO_Projects/My_PIO_Projects/examples/*/.pio
+            ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
           key: ${{ runner.os }}-pio
 
       - name: Set up Python
