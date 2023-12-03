@@ -26,6 +26,7 @@ jobs:
         project:
 #          - "Projects/WLED"
           - "Projects/esp8266_webinterface"
+          - "Projects/ws2812fx_segments_web"
 #          - "Projects/forms_led"
 #          - "Projects/arduino-blink"
 #          - "Projects/arduino-blink_rgb"
