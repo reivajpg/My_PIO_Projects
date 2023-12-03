@@ -23,9 +23,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        example:
-#          - "*/WLED"
-          - "*/esp8266_webinterface"
+        project:
+#          - "Projects/WLED"
+          - "**/esp8266_webinterface"
 #          - "*/forms_led"
 #          - "*/arduino-blink"
 #          - "*/arduino-blink_rgb"
@@ -64,17 +64,17 @@ jobs:
 
       - name: Build Project
         run: |
-          pio run -d ${{ matrix.example}}
+          pio run -d ${{ matrix.project}}
 
       - name: Save and Push Build
         run: |
-          mkdir -p ${{matrix.example}}/out/
-          mv -b ${{matrix.example}}/.pio/build/*/firmware.* ${{matrix.example}}/out/
-          ls -Rlh ${{matrix.example}}/out/
+          mkdir -p ${{matrix.project}}/out/
+          mv -b ${{matrix.project}}/.pio/build/*/firmware.* ${{matrix.project}}/out/
+          ls -Rlh ${{matrix.project}}/out/
           git config user.name github-actions
           git config user.email github-actions@github.com
           if git diff --exit-code; then
-             git add ${{matrix.example}}/out/
+             git add ${{matrix.project}}/out/
              git commit -am "GH Action Files added $(date)"
              git push 
           fi
