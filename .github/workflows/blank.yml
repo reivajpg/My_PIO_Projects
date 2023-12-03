@@ -49,6 +49,7 @@ jobs:
           path: |
             ~/.cache/pip
             ~/.platformio
+            ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
           key: ${{ runner.os }}-pio
 
       - name: Set up Python
