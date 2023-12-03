@@ -40,7 +40,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: echo Hello, world!
+        run: uname -a | neofetch
 
       - uses: actions/cache@v3
         with:
@@ -67,7 +67,7 @@ jobs:
       - name: Save and Push Build
         run: |
           mkdir -p ${{matrix.project}}/build_output/
-          mv -b ${{matrix.project}}/.pio/build/*/firmware.* ${{matrix.project}}/build_output/
+          mv -b ${{matrix.project}}/.pio/build/*/*.bin|*.elf ${{matrix.project}}/build_output/
           ls -Rlh ${{matrix.project}}/build_output/
           git config user.name github-actions
           git config user.email github-actions@github.com
