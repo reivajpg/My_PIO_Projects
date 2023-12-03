@@ -25,7 +25,7 @@ jobs:
       matrix:
         project:
 #          - "Projects/WLED"
-          - "**/esp8266_webinterface"
+          - "Projects/esp8266_webinterface"
 #          - "*/forms_led"
 #          - "*/arduino-blink"
 #          - "*/arduino-blink_rgb"
