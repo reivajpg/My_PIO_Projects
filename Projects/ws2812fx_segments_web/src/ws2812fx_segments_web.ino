@@ -69,7 +69,7 @@
   "}]" \
 "}]"
 
-WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 AsyncWebServer server(80);
 
 struct Preset {
