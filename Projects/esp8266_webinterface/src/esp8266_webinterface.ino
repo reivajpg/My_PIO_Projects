@@ -82,7 +82,8 @@ String modes = "";
 uint8_t myModes[] = {}; // *** optionally create a custom list of effect/mode numbers
 bool auto_cycle = false;
 
-WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+//WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 WEB_SERVER server(HTTP_PORT);
 
 void setup(){
