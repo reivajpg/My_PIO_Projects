@@ -41,7 +41,7 @@
 #define DYNAMIC_JSON_DOCUMENT_SIZE  2048 /* used by AsyncJson. Default is 1024, which is a little too small */
 
 #include <WS2812FX.h>
-#include <ESPAsyncWebSrv.h> /* https://github.com/me-no-dev/ESPAsyncWebServer */
+#include <ESPAsyncWebServer.h> /* https://github.com/me-no-dev/ESPAsyncWebServer */
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include <ArduinoOTA.h>
@@ -54,11 +54,11 @@
 #include "material_icons_subset.woff2.h"
 #include "index.html.h"
 
-#define LED_PIN     4 // digital pin used to drive the LED strip
-#define LED_COUNT 144 // number of LEDs on the strip
+#define LED_PIN     2//4 // digital pin used to drive the LED strip
+#define LED_COUNT 1//144 // number of LEDs on the strip
 
-#define WIFI_SSID "xxxxxxxx"     // WiFi network
-#define WIFI_PASSWORD "xxxxxxxx" // WiFi network password
+#define WIFI_SSID "MiFibra-A8D0"     // WiFi network
+#define WIFI_PASSWORD "L39QjzXV" // WiFi network password
 
 #define EEPROM_SIZE 4096
 #define PRESETS_MAX_SIZE (EEPROM_SIZE - sizeof(int) - sizeof(preset) - 1) // maximum size of the presets string
