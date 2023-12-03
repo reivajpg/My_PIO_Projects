@@ -25,13 +25,11 @@ jobs:
       matrix:
         project:
 #          - "Projects/WLED"
-          - "Projects/esp8266_webinterface"
-#          - "Projects/ws2812fx_segments_web"
-#          - "Projects/forms_led"
+#          - "Projects/esp8266_webinterface"
+          - "Projects/forms_led"
 #          - "Projects/arduino-blink"
 #          - "Projects/arduino-blink_rgb"
-#          - "Projects/arduino-external-libs"
-#        var: [WLED]
+#          - "Projects/"
     
 
     # Steps represent a sequence of tasks that will be executed as part of the job
