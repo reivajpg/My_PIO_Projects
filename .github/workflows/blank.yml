@@ -68,13 +68,13 @@ jobs:
 
       - name: Save and Push Build
         run: |
-          mkdir -p ${{matrix.project}}/out/
-          mv -b ${{matrix.project}}/.pio/build/*/firmware.* ${{matrix.project}}/out/
-          ls -Rlh ${{matrix.project}}/out/
+          mkdir -p ${{matrix.project}}/build_output/
+          mv -b ${{matrix.project}}/.pio/build/*/firmware.* ${{matrix.project}}/build_output/
+          ls -Rlh ${{matrix.project}}/build_output/
           git config user.name github-actions
           git config user.email github-actions@github.com
           if git diff --exit-code; then
-             git add ${{matrix.project}}/out/
+             git add ${{matrix.project}}/build_output/
              git commit -am "GH Action Files added $(date)"
              git push 
           fi
