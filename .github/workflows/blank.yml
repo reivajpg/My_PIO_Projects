@@ -40,7 +40,9 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: sudo apt update && sudo apt install neofetch | neofetch
+        run: sudo apt update
+             sudo apt install neofetch
+             neofetch
 
       - uses: actions/cache@v3
         with:
