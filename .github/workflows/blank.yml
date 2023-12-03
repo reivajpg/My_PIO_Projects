@@ -26,10 +26,10 @@ jobs:
         project:
 #          - "Projects/WLED"
           - "Projects/esp8266_webinterface"
-#          - "*/forms_led"
-#          - "*/arduino-blink"
-#          - "*/arduino-blink_rgb"
-#          - "*/arduino-external-libs"
+#          - "Projects/forms_led"
+#          - "Projects/arduino-blink"
+#          - "Projects/arduino-blink_rgb"
+#          - "Projects/arduino-external-libs"
 #        var: [WLED]
     
 
@@ -73,7 +73,7 @@ jobs:
           git config user.email github-actions@github.com
           if git diff --exit-code; then
              git add ${{matrix.project}}/build_output/
-             git commit -am "GH Action Files added $(date)"
+             git commit -am "GH Action Files added $(date +"%d-%m-%y_%T")"
              git push 
           fi
 
