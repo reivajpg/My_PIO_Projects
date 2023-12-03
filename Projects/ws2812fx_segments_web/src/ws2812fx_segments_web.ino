@@ -55,7 +55,7 @@
 #include "index.html.h"
 
 #define LED_PIN     2//4 // digital pin used to drive the LED strip
-#define LED_COUNT 1//144 // number of LEDs on the strip
+#define LED_COUNT 2//144 // number of LEDs on the strip
 
 #define WIFI_SSID "MiFibra-A8D0"     // WiFi network
 #define WIFI_PASSWORD "L39QjzXV" // WiFi network password
