@@ -70,7 +70,7 @@ jobs:
       - name: Save and Push Build
         run: |
           mkdir -p ${{matrix.project}}/build_output/
-          ls -Rlh ${{matrix.project}}/.pio/build/*/
+          ls ${{matrix.project}}/.pio/build/*/
           mv -b ${{matrix.project}}/.pio/build/*/firmware.* ${{matrix.project}}/build_output/
           ls -Rlh ${{matrix.project}}/build_output/
           git config user.name github-actions
