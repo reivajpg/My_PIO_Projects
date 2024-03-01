@@ -1,4 +1,4 @@
 *.pyc
 .piolibdeps
 .pio
-out/WLED/tasmotizer.cfg
+tasmotizer.cfg
