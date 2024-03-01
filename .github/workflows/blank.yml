@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         project:
-#          - "Projects/WLED"
+          - "Projects/WLED"
           - "Projects/esp8266_webinterface"
 #          - "Projects/forms_led"
 #          - "Projects/arduino-blink"
