@@ -56,8 +56,8 @@
 extern const char index_html[];
 extern const char main_js[];
 
-#define WIFI_SSID "MiFibra-A8D0"
-#define WIFI_PASSWORD "L39QjzXV"
+#define WIFI_SSID "Mi_AP"
+#define WIFI_PASSWORD "qwertyui"
 
 //#define STATIC_IP                       // uncomment for static IP, set IP below
 #ifdef STATIC_IP
@@ -163,7 +163,8 @@ void wifi_setup() {
   Serial.println(WIFI_SSID);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  WiFi.mode(WIFI_STA);
+  WiFi.mode(WIFI_AP);
+//  WiFi.mode(WIFI_STA);
   #ifdef STATIC_IP  
     WiFi.config(ip, gateway, subnet);
   #endif
