@@ -163,8 +163,8 @@ void wifi_setup() {
   Serial.println(WIFI_SSID);
 
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  WiFi.mode(WIFI_AP);
-//  WiFi.mode(WIFI_STA);
+//  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_STA);
   #ifdef STATIC_IP  
     WiFi.config(ip, gateway, subnet);
   #endif
