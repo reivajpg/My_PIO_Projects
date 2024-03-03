@@ -1,10 +1,16 @@
 #include <ESP8266WiFi.h>
-#include <WS2812FX.h>
 #include <ESP8266WebServer.h>
-#include <ArduinoJson.h>
-#include <ArduinoOTA.h>
+//#include <ArduinoJson.h>
+//#include <ArduinoOTA.h>
+#include <WS2812FX.h>
 
 extern const char index_html[];
+extern const char main_js[];
+
+// QUICKFIX...See https://github.com/esp8266/Arduino/issues/263
+#define min(a,b) ((a)<(b)?(a):(b))
+#define max(a,b) ((a)>(b)?(a):(b))
+
 
 #define LED_PIN   2 //D1 // digital pin used to drive the LED strip (esp8266)
 #define LED_COUNT 3 //30 // number of LEDs on the strip
@@ -12,6 +18,7 @@ extern const char index_html[];
 
 WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800); //NEO_GRBW for RGBW leds can be changed in to GRB
 ESP8266WebServer server(80);
+
 const char *ssid = "Ligth_AP"; // AP ssid name
 const char *password = "qwertyui"; //the password should be 8 char or more
 
@@ -19,132 +26,197 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\r\n");
 
-  // init WiFi
- 
-WiFi.softAP(ssid, password); 
 
-   WiFi.mode(WIFI_AP);
-  Serial.print("\nPoint your browser to ");
-  Serial.println(WiFi.localIP());
+  modes.reserve(5000);
+  modes_setup();
 
-  ArduinoOTA.onStart([]() {
-    Serial.println("OTA start");
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nOTA end");
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-    else if (error == OTA_END_ERROR) Serial.println("End Failed");
-  });
-  ArduinoOTA.begin();
-
-  /* init web server */
-  // return the index.html file
-  server.on("/", [](){
-    server.send_P(200, "text/html", index_html);
-  });
-
-  // send the segment info in JSON format
-  server.on("/getsegments", [](){
-    DynamicJsonBuffer jsonBuffer(1000);
-    JsonObject& root = jsonBuffer.createObject();
-    root["pin"] = ws2812fx.getPin();
-    root["numPixels"] = ws2812fx.numPixels();
-    root["numSegments"] = ws2812fx.getNumSegments();
-    JsonArray& jsonSegments = root.createNestedArray("segments");
-
-    WS2812FX::segment* segments = ws2812fx.getSegments();
-    for(int i=0; i<ws2812fx.getNumSegments(); i++) {
-      WS2812FX::segment seg = segments[i];
-      JsonObject& jsonSegment = jsonBuffer.createObject();
-      jsonSegment["start"] = seg.start;
-      jsonSegment["stop"] = seg.stop;
-      jsonSegment["mode"] = seg.mode;
-      jsonSegment["speed"] = seg.speed;
-      jsonSegment["reverse"] = seg.options & REVERSE ? true: false;
-      JsonArray& jsonColors = jsonSegment.createNestedArray("colors");
-      jsonColors.add(seg.colors[0]); // the web interface expects three color values
-      jsonColors.add(seg.colors[1]);
-      jsonColors.add(seg.colors[2]);
-      jsonSegments.add(jsonSegment);
-    }
-    // root.printTo(Serial);
-
-    int bufferSize = root.measureLength() + 1;
-    char *json = (char*)malloc(sizeof(char) * (bufferSize));
-    root.printTo(json, sizeof(char) * bufferSize);
-    server.send(200, "application/json", json);
-    free(json);
-  });
-
-  // receive the segment info in JSON format and setup the WS2812 strip
-  server.on("/setsegments", HTTP_POST, [](){
-    String data = server.arg("plain");
-    data = data.substring(1, data.length() - 1); // remove the surrounding quotes
-    data.replace("\\\"", "\""); // replace all the backslash quotes with just quotes
-//Serial.println(data);
-    DynamicJsonBuffer jsonBuffer(1000);
-    JsonObject& root = jsonBuffer.parseObject(data);
-    if (root.success()) {
-      ws2812fx.stop();
-      ws2812fx.setLength(root["numPixels"]);
-      ws2812fx.stop(); // reset strip again in case length was increased
-      ws2812fx.setNumSegments(1); // reset number of segments
-      JsonArray& segments = root["segments"];
-      for (int i = 0; i< segments.size(); i++){
-        JsonObject& seg = segments[i];
-        JsonArray& colors = seg["colors"];
-        // the web interface sends three color values
-        uint32_t _colors[NUM_COLORS] = {colors[0], colors[1], colors[2]};
-        bool reverse = seg["reverse"];
-        ws2812fx.setSegment(i, seg["start"], seg["stop"], seg["mode"], _colors, seg["speed"], reverse ? REVERSE : NO_OPTIONS);
-      }
-      ws2812fx.start();
-    }
-    server.send(200, "text/plain", "OK");
-  });
-
-  // send the WS2812 mode info
-  server.on("/getmodes", [](){
-    DynamicJsonBuffer jsonBuffer(1000);
-    JsonArray& root = jsonBuffer.createArray();
-    for(uint8_t i=0; i < ws2812fx.getModeCount(); i++) {
-      root.add(ws2812fx.getModeName(i));
-    }
-
-    int bufferSize = root.measureLength() + 1;
-    char *json = (char*)malloc(sizeof(char) * (bufferSize));
-    root.printTo(json, sizeof(char) * bufferSize);
-    server.send(200, "application/json", json);
-    free(json);
-  });
-
-  server.onNotFound([](){
-    server.send(404, "text/plain", "Page not found");
-  });
-
-  // start the web server
-  server.begin();
-
-  // init LED strip with some default segments ive seted to static white at the start for my audi S6C5 interior lights
+  Serial.println("WS2812FX setup");
   ws2812fx.init();
-  ws2812fx.setBrightness(255); // set to full brightness
-  // parameters:  index, start,        stop,         mode,                              colors, speed, reverse
-  ws2812fx.setSegment(0,     0, LED_COUNT-1, FX_MODE_STATIC, (const uint32_t[]) {0xffffff, 0xffffff, 0xffffff},  1000, false);
+  ws2812fx.setMode(FX_MODE_STATIC);
+  //ws2812fx.setColor(0xFF5900);
+  ws2812fx.setColor(0xFFFFFF);
+  ws2812fx.setSpeed(1000);
+  ws2812fx.setBrightness(128);
   ws2812fx.start();
+
+  Serial.println("Wifi setup");
+  wifi_setup();
+ 
+  Serial.println("HTTP server setup");
+  server.on("/", srv_handle_index_html);
+  server.on("/main.js", srv_handle_main_js);
+  server.on("/modes", srv_handle_modes);
+  server.on("/set", srv_handle_set);
+  server.onNotFound(srv_handle_not_found);
+  server.begin();
+  Serial.println("HTTP server started.");
+
+  Serial.println("ready!");
+
 }
 
 void loop() {
   ws2812fx.service();
   server.handleClient();
-  ArduinoOTA.handle();
+  //ArduinoOTA.handle();
+
+  unsigned long now = millis();
+
+  server.handleClient();
+  ws2812fx.service();
+
+  if(now - last_wifi_check_time > WIFI_TIMEOUT) {
+    Serial.print("Checking WiFi... ");
+    if(WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi connection lost. Reconnecting...");
+      wifi_setup();
+    } else {
+      Serial.println("OK");
+    }
+    last_wifi_check_time = now;
+  }
+
+  if(auto_cycle && (now - auto_last_change > 10000)) { // cycle effect mode every 10 seconds
+    uint8_t next_mode = (ws2812fx.getMode() + 1) % ws2812fx.getModeCount();
+    if(sizeof(myModes) > 0) { // if custom list of modes exists
+      for(uint8_t i=0; i < sizeof(myModes); i++) {
+        if(myModes[i] == ws2812fx.getMode()) {
+          next_mode = ((i + 1) < sizeof(myModes)) ? myModes[i + 1] : myModes[0];
+          break;
+        }
+      }
+    }
+    ws2812fx.setMode(next_mode);
+    Serial.print("mode is "); Serial.println(ws2812fx.getModeName(ws2812fx.getMode()));
+    auto_last_change = now;
+  }
 }
 
+
+
+
+/*
+ * Init WiFi. If no connection is made within WIFI_TIMEOUT, ESP gets resettet.
+ */
+void wifi_setup() {
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(WIFI_SSID);
+
+  WiFi.softAP(ssid, password); 
+  WiFi.mode(WIFI_AP);
+  #ifdef STATIC_IP  
+    WiFi.config(ip, gateway, subnet);
+  #endif
+    Serial.print("\nPoint your browser to ");
+    Serial.println(WiFi.localIP());
+//
+
+  unsigned long connect_start = millis();
+  while(WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+
+    if(millis() - connect_start > WIFI_TIMEOUT) {
+      Serial.println();
+      Serial.print("Tried ");
+      Serial.print(WIFI_TIMEOUT);
+      Serial.print("ms. Resetting ESP now.");
+      //ESP_RESET;
+    }
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");  
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
+}
+
+
+/*
+ * Build <li> string for all modes.
+ */
+void modes_setup() {
+  modes = "";
+  uint8_t num_modes = sizeof(myModes) > 0 ? sizeof(myModes) : ws2812fx.getModeCount();
+  for(uint8_t i=0; i < num_modes; i++) {
+    uint8_t m = sizeof(myModes) > 0 ? myModes[i] : i;
+    modes += "<li><a href='#'>";
+    modes += ws2812fx.getModeName(m);
+    modes += "</a></li>";
+  }
+}
+
+/* #####################################################
+#  Webserver Functions
+##################################################### */
+
+void srv_handle_not_found() {
+  server.send(404, "text/plain", "File Not Found");
+}
+
+void srv_handle_index_html() {
+  server.send_P(200,"text/html", index_html);
+}
+
+void srv_handle_main_js() {
+  server.send_P(200,"application/javascript", main_js);
+}
+
+void srv_handle_modes() {
+  server.send(200,"text/plain", modes);
+}
+
+void srv_handle_set() {
+  for (uint8_t i=0; i < server.args(); i++){
+    if(server.argName(i) == "c") {
+      uint32_t tmp = (uint32_t) strtol(server.arg(i).c_str(), NULL, 10);
+      if(tmp <= 0xFFFFFF) {
+        ws2812fx.setColor(tmp);
+      }
+    }
+
+    if(server.argName(i) == "m") {
+      uint8_t tmp = (uint8_t) strtol(server.arg(i).c_str(), NULL, 10);
+      uint8_t new_mode = sizeof(myModes) > 0 ? myModes[tmp % sizeof(myModes)] : tmp % ws2812fx.getModeCount();
+      ws2812fx.setMode(new_mode);
+      auto_cycle = false;
+      Serial.print("mode is "); Serial.println(ws2812fx.getModeName(ws2812fx.getMode()));
+    }
+
+    if(server.argName(i) == "b") {
+      if(server.arg(i)[0] == '-') {
+        ws2812fx.setBrightness(ws2812fx.getBrightness() * 0.8);
+      } else if(server.arg(i)[0] == ' ') {
+        ws2812fx.setBrightness(min(max(ws2812fx.getBrightness(), 5) * 1.2, 255));
+      } else { // set brightness directly
+        uint8_t tmp = (uint8_t) strtol(server.arg(i).c_str(), NULL, 10);
+        ws2812fx.setBrightness(tmp);
+      }
+      Serial.print("brightness is "); Serial.println(ws2812fx.getBrightness());
+    }
+
+    if(server.argName(i) == "s") {
+      if(server.arg(i)[0] == '-') {
+        ws2812fx.setSpeed(max(ws2812fx.getSpeed(), 5) * 1.2);
+      } else if(server.arg(i)[0] == ' ') {
+        ws2812fx.setSpeed(ws2812fx.getSpeed() * 0.8);
+      } else {
+        uint16_t tmp = (uint16_t) strtol(server.arg(i).c_str(), NULL, 10);
+        ws2812fx.setSpeed(tmp);
+      }
+      Serial.print("speed is "); Serial.println(ws2812fx.getSpeed());
+    }
+
+    if(server.argName(i) == "a") {
+      if(server.arg(i)[0] == '-') {
+        auto_cycle = false;
+      } else {
+        auto_cycle = true;
+        auto_last_change = 0;
+      }
+    }
+  }
+  server.send(200, "text/plain", "OK");
+}
