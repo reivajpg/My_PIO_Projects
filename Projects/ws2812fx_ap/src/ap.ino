@@ -131,10 +131,11 @@ void wifi_setup() {
   #ifdef STATIC_IP  
     WiFi.config(ip, gateway, subnet);
   #endif
-    Serial.print("\nPoint your browser to ");
     Serial.println(WiFi.localIP());
-//
+    Serial.print("\nPoint your browser to ");
+    Serial.println(WiFi.status());
 
+/**
   unsigned long connect_start = millis();
   while(WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -148,12 +149,7 @@ void wifi_setup() {
       //ESP_RESET;
     }
   }
-
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
+**/
 }
 
 
