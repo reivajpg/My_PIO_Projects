@@ -7,25 +7,37 @@
 extern const char index_html[];
 extern const char main_js[];
 
+#define WIFI_SSID "Mi_AP"
+#define WIFI_PASSWORD "qwertyui"
+
 // QUICKFIX...See https://github.com/esp8266/Arduino/issues/263
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
-
 
 #define LED_PIN   2 //D1 // digital pin used to drive the LED strip (esp8266)
 #define LED_COUNT 3 //30 // number of LEDs on the strip
 
 
-WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRBW + NEO_KHZ800); //NEO_GRBW for RGBW leds can be changed in to GRB
-ESP8266WebServer server(80);
+#define WIFI_TIMEOUT 30000              // checks WiFi every ...ms. Reset after this time, if WiFi cannot reconnect.
+#define HTTP_PORT 80
+
+unsigned long auto_last_change = 0;
+unsigned long last_wifi_check_time = 0;
+String modes = "";
+uint8_t myModes[] = {}; // *** optionally create a custom list of effect/mode numbers
+bool auto_cycle = false;
+
+//WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
+WEB_SERVER server(HTTP_PORT);
 
 const char *ssid = "Ligth_AP"; // AP ssid name
 const char *password = "qwertyui"; //the password should be 8 char or more
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("\r\n");
-
+  delay(500);
+  Serial.println("\n\nStarting...");
 
   modes.reserve(5000);
   modes_setup();
@@ -52,14 +64,10 @@ void setup() {
   Serial.println("HTTP server started.");
 
   Serial.println("ready!");
-
 }
 
-void loop() {
-  ws2812fx.service();
-  server.handleClient();
-  //ArduinoOTA.handle();
 
+void loop() {
   unsigned long now = millis();
 
   server.handleClient();
