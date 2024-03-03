@@ -88,6 +88,7 @@ void loop() {
   server.handleClient();
   ws2812fx.service();
 
+/**
   if(now - last_wifi_check_time > WIFI_TIMEOUT) {
     Serial.print("Checking WiFi... ");
     if(WiFi.status() != WL_CONNECTED) {
@@ -98,6 +99,7 @@ void loop() {
     }
     last_wifi_check_time = now;
   }
+**/
 
   if(auto_cycle && (now - auto_last_change > 10000)) { // cycle effect mode every 10 seconds
     uint8_t next_mode = (ws2812fx.getMode() + 1) % ws2812fx.getModeCount();
@@ -123,7 +125,7 @@ void loop() {
  */
 void wifi_setup() {
   Serial.println();
-  Serial.print("Connecting to ");
+  Serial.print("Connecting to AP:");
   Serial.println(WIFI_SSID);
 
   WiFi.softAP(ssid, password); 
@@ -131,25 +133,9 @@ void wifi_setup() {
   #ifdef STATIC_IP  
     WiFi.config(ip, gateway, subnet);
   #endif
+    Serial.print("\nPoint your browser to IP:");
     Serial.println(WiFi.localIP());
-    Serial.print("\nPoint your browser to ");
-    Serial.println(WiFi.status());
 
-/**
-  unsigned long connect_start = millis();
-  while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-
-    if(millis() - connect_start > WIFI_TIMEOUT) {
-      Serial.println();
-      Serial.print("Tried ");
-      Serial.print(WIFI_TIMEOUT);
-      Serial.print("ms. Resetting ESP now.");
-      //ESP_RESET;
-    }
-  }
-**/
 }
 
 
