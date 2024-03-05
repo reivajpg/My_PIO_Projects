@@ -19,7 +19,7 @@ void setup(void)
 	Serial.begin(115200);
 	LittleFS.begin(); //SPIFFS.begin();
 	
-	ConnectWiFi_AP();
+	ConnectWiFi_STA();
 
 	InitServer();
 }
