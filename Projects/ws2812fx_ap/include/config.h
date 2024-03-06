@@ -1,10 +1,10 @@
 const char* hostname = "NODEMCU_V3";
 
-const char* ssid     = "IxDM";
-const char* password = "qwertyui";
-/////////////////////////////////////////
-//const char* ssid = "Mi_AP";
+//const char* ssid     = "IxDM";
 //const char* password = "qwertyui";
+/////////////////////////////////////////
+const char* ssid = "Mi_AP";
+const char* password = "qwertyui";
 
 
 ////////////////////////////////////////////////////////////////////////
