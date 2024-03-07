@@ -1,8 +1,8 @@
-void wifi_setup(char modo) {
+unsigned int modo=0;
+void wifi_setup( unsigned int modo) {
   switch(modo){
-    case 'S':
-    case 's':{
-      Serial.println("");
+    case 0:{
+      //Serial.println("");
       WiFi.mode(WIFI_STA);
       WiFi.begin(ssid, password);
       #ifdef STATIC_IP
@@ -10,28 +10,27 @@ void wifi_setup(char modo) {
       #endif
       while (WiFi.status() != WL_CONNECTED) 
         { 
-          delay(100);Serial.print('.'); 
+          delay(100); Serial.print('.'); 
         }
  
-      Serial.println("");
+      //Serial.println("");
       Serial.print("Iniciado modo STA:\t");
       Serial.println(ssid);
       Serial.print("IP address:\t");
       Serial.println(WiFi.localIP());
       }
       break;
-    case 'A':
-    case 'a':{
-      Serial.println("");
+    case 1:{
+      //Serial.println("");
       WiFi.mode(WIFI_AP);
       while(!WiFi.softAP(ssid, password))
         {
-          Serial.println(".");delay(100);
+          Serial.println("."); delay(100);
         }
       #ifdef STATIC_IP  
         WiFi.config(ip, gateway, subnet);
       #endif
-      Serial.println("");
+      //Serial.println("");
       Serial.print("Iniciado modo AP:\t");
       Serial.println(ssid);
       Serial.print("IP address:\t");

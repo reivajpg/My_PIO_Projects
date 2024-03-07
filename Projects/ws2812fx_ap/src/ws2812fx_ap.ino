@@ -58,7 +58,7 @@ void setup() {
   ws2812fx.start();
 
   Serial.println("Wifi setup");
-  wifi_setup('AP');
+  wifi_setup(1); // 0=STA 1=AP
 
   //InitServer();
 
