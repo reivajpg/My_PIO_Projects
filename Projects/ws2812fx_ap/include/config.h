@@ -1,15 +1,17 @@
 const char* hostname = "NODEMCU_V3";
 
-//const char* ssid     = "IxDM";
-//const char* password = "qwertyui";
-/////////////////////////////////////////
-const char* ssid = "Mi_AP";
-const char* password = "qwertyui";
+//////////STA_Mode//////////
+const char* sta_ssid     = "IxDM";
+const char* sta_password = "qwertyui";
+
+//////////AP_Mode//////////
+const char* ap_ssid = "Mi_AP";
+const char* ap_password = "qwertyui";
 
 
 ////////////////////////////////////////////////////////////////////////
 
-#define STATIC_IP                       // uncomment for static IP, set IP below
+//#define STATIC_IP                       // uncomment for static IP, set IP below
 #ifdef STATIC_IP
   IPAddress ip(192,168,0,1);
   IPAddress gateway(192,168,0,1);
