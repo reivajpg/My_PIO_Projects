@@ -1,21 +1,34 @@
+#define WIFI_TIMEOUT 30000              // checks WiFi every ...ms. Reset after this time, if WiFi cannot reconnect.
+
 unsigned int modo=0;
+
 void wifi_setup( unsigned int modo) {
   switch(modo){
     case 0:{
       //Serial.println("");
       WiFi.mode(WIFI_STA);
-      WiFi.begin(ssid, password);
+      WiFi.begin(sta_ssid, sta_password);
       #ifdef STATIC_IP
         WiFi.config(ip, gateway, subnet);
       #endif
-      while (WiFi.status() != WL_CONNECTED) 
+      unsigned long connect_start = millis();
+      while (WiFi.status() != WL_CONNECTED) //If no connection is made within WIFI_TIMEOUT, ESP gets resettet.
         { 
-          delay(100); Serial.print('.'); 
+          delay(500); Serial.print('.');
+          if(millis() - connect_start > WIFI_TIMEOUT) {
+            Serial.println();
+            Serial.print("Tried ");
+            Serial.print(WIFI_TIMEOUT);
+            Serial.print("ms. Cambiando a modo AP.");
+            //ESP_RESET;
+            wifi_setup(1);
+            break;
+          }
         }
- 
+
       //Serial.println("");
       Serial.print("Iniciado modo STA:\t");
-      Serial.println(ssid);
+      Serial.println(sta_ssid);
       Serial.print("IP address:\t");
       Serial.println(WiFi.localIP());
       }
@@ -23,7 +36,7 @@ void wifi_setup( unsigned int modo) {
     case 1:{
       //Serial.println("");
       WiFi.mode(WIFI_AP);
-      while(!WiFi.softAP(ssid, password))
+      while(!WiFi.softAP(ap_ssid, ap_password))
         {
           Serial.println("."); delay(100);
         }
@@ -32,13 +45,14 @@ void wifi_setup( unsigned int modo) {
       #endif
       //Serial.println("");
       Serial.print("Iniciado modo AP:\t");
-      Serial.println(ssid);
+      Serial.println(ap_ssid);
       Serial.print("IP address:\t");
       Serial.println(WiFi.softAPIP());
       }
       break;
-    }
+  }
 }
+
 /*
 void ConnectWiFi_STA()
 {
@@ -97,34 +111,6 @@ void ConnectWiFi_AP()
   #define WEB_SERVER ESP8266WebServer
   #define ESP_RESET ESP.reset()
 #endif
-
-/*
-void wifi_setup() {
-  Serial.println();
-  Serial.print("Connecting to AP:");
-  Serial.println(WIFI_SSID);
-
-  WiFi.softAP(ssid, password); 
-  WiFi.mode(WIFI_AP);
-  #ifdef STATIC_IP  
-    WiFi.config(ip, gateway, subnet);
-  #endif
-
-  unsigned long connect_start = millis();
-  while(WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-
-    if(millis() - connect_start > WIFI_TIMEOUT) {
-      Serial.println();
-      Serial.print("Tried ");
-      Serial.print(WIFI_TIMEOUT);
-      Serial.print("ms. Resetting ESP now.");
-      ESP_RESET;
-    }
-  }
-}
-*/
 
 
 /**

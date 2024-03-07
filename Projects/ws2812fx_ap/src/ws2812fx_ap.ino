@@ -58,7 +58,7 @@ void setup() {
   ws2812fx.start();
 
   Serial.println("Wifi setup");
-  wifi_setup(1); // 0=STA 1=AP
+  wifi_setup(0); // 0=STA 1=AP
 
   //InitServer();
 
@@ -84,7 +84,7 @@ void loop() {
   server.handleClient();
   ArduinoOTA.handle();
   ws2812fx.service();
-
+  
 
   if(auto_cycle && (now - auto_last_change > 10000)) { // cycle effect mode every 10 seconds
     uint8_t next_mode = (ws2812fx.getMode() + 1) % ws2812fx.getModeCount();
