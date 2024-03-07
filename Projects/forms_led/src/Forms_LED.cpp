@@ -1,12 +1,14 @@
 #include <ESP8266WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h> //<FS.h>
+#include <ArduinoOTA.h>
 
 #define LED 16
 
 #include "config.h"  // Sustituir con datos de vuestra red
-#include "Server.hpp"
+#include "server.hpp"
 #include "ESP8266_Utils.hpp"
+#include "ota.hpp"
 
 void setup(void)
 {
@@ -19,7 +21,8 @@ void setup(void)
 	Serial.begin(115200);
 	LittleFS.begin(); //SPIFFS.begin();
 	
-	ConnectWiFi_STA();
+	Serial.println("Wifi setup");
+  	wifi_setup(0); // 0=STA 1=AP
 
 	InitServer();
 }
