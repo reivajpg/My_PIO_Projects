@@ -6,7 +6,7 @@
 #define LED 16
 
 #include "config.h"  // Sustituir con datos de vuestra red
-#include "server.hpp"
+#include "Server.hpp"
 #include "ESP8266_Utils.hpp"
 #include "ota.hpp"
 
@@ -21,12 +21,15 @@ void setup(void)
 	Serial.begin(115200);
 	LittleFS.begin(); //SPIFFS.begin();
 	
-	Serial.println("Wifi setup");
-  	wifi_setup(0); // 0=STA 1=AP
+	ConnectWiFi_STA();
+
+	Serial.println("OTA setup");
+  	ota_setup();
 
 	InitServer();
 }
 
 void loop(void)
 {
+	ArduinoOTA.handle();
 }

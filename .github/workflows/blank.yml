@@ -25,10 +25,10 @@ jobs:
       matrix:
         project:
 #          - "Projects/WLED"
-           - "Projects/ws2812fx_ap"
+#           - "Projects/ws2812fx_ap"
 #          - "Projects/esp8266_webinterface"
 #          - "Projects/forms_led"
-#          - "Projects/arduino-blink"
+          - "Projects/arduino-blink"
 #          - "Projects/arduino-blink_rgb"
 #          - "Projects/"
     
