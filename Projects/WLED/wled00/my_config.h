@@ -21,8 +21,6 @@
 #define CLIENT_SSID "Your_SSID"
 #define CLIENT_PASS "Your_Password"
 */
-#define CLIENT_SSID "My_AP"
-#define CLIENT_PASS "qwertyui"
 
-#define MAX_LEDS 1         // Maximum total LEDs. More than 1500 might create a low memory situation on ESP8266.
+//#define MAX_LEDS 1500       // Maximum total LEDs. More than 1500 might create a low memory situation on ESP8266.
 //#define MDNS_NAME "wled"    // mDNS hostname, ie: *.local
