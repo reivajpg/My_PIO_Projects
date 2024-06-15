@@ -42,9 +42,9 @@ jobs:
       # Runs a single command using the runners shell
       - name: Run a one-line script
         run: |
-             #sudo apt-get install neofetch
-             #neofetch
-             uname -a
+             sudo apt-get install neofetch
+             neofetch
+             #uname -a
 
       - uses: actions/cache@v3
         with:
