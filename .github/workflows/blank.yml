@@ -50,8 +50,8 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-#            ~/.cache/pip
-#            ~/.platformio
+            #~/.cache/pip
+            #~/.platformio
             ~/work/My_PIO_Projects/My_PIO_Projects/Projects/*/.pio
           key: ${{ runner.os }}-pio
 
