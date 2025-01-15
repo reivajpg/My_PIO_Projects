@@ -25,9 +25,9 @@ jobs:
       matrix:
         project:
 #         - "Projects/WLED"
-          - "Projects/ESP_DS18B20_Async_Web_Server"
+#          - "Projects/ESP_DS18B20_Async_Web_Server"
 #          - "Projects/ws2812fx_ap"
-#          - "Projects/esp8266_webinterface"
+          - "Projects/esp8266_webinterface"
 #          - "Projects/forms_led"
 #          - "Projects/arduino-blink"
 #          - "Projects/arduino-blink_rgb"
