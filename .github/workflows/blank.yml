@@ -72,7 +72,8 @@ jobs:
 
       - name: Dummy Upload Project
         run: |
-        ${{ matrix.project}} pio run -t upload
+        ls
+        pio run -t upload
 
       - name: Save and Push Build
         run: |
