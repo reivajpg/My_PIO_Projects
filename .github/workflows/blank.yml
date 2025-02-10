@@ -70,11 +70,11 @@ jobs:
         run: |
           pio run -d ${{ matrix.project}}
 
-      - name: Dummy Upload Project
-        run: |
-          cd ${{matrix.project}}
+#      - name: Dummy Upload Project
+#        run: |
+#          cd ${{matrix.project}}
 #          pio run -t upload
-          idf.py particion-table
+#          idf.py particion-table
 
       - name: Save and Push Build
         run: |
