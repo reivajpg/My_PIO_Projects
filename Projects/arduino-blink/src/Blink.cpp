@@ -21,10 +21,14 @@ void loop()
 {
   // turn the LED on (HIGH is the voltage level)
   digitalWrite(LED_BUILTIN, HIGH);
+  serialprint(turn the LED on (HIGH is the voltage level));
   // wait for a second
   delay(1000);
+  serialprint(wait for a second);
   // turn the LED off by making the voltage LOW
   digitalWrite(LED_BUILTIN, LOW);
+  serialprint(turn the LED off by making the voltage LOW);
    // wait for a second
   delay(1000);
+  serialprint(wait for a second);
 }
