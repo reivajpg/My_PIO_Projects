@@ -74,7 +74,7 @@ jobs:
         run: |
           mkdir -p ${{matrix.project}}/build_output/
           ls ${{matrix.project}}/.pio/build/*/
-          mv -b ${{matrix.project}}/.pio/build/*/*/*.bin ${{matrix.project}}/build_output/
+          mv -b ${{matrix.project}}/.pio/build/* ${{matrix.project}}/build_output/
           ls -Rlh ${{matrix.project}}/build_output/
           git config user.name github-actions
           git config user.email github-actions@github.com
