@@ -70,6 +70,11 @@ jobs:
         run: |
           pio run -d ${{ matrix.project}}
 
+      - name: Dummy Upload Project
+        run: |
+        cd ${{ matrix.project}}
+        pio run -t upload
+
       - name: Save and Push Build
         run: |
           mkdir -p ${{matrix.project}}/build_output/
