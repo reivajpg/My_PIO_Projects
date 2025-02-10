@@ -73,7 +73,7 @@ jobs:
       - name: Dummy Upload Project
         run: |
           cd ${{matrix.project}}
-          pio run -t upload
+#          pio run -t upload
           idf.py particion-table
 
       - name: Save and Push Build
