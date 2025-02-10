@@ -15,20 +15,22 @@ void setup()
 {
   // initialize LED digital pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
+
+  Serial.begin(115200);
 }
 
 void loop()
 {
   // turn the LED on (HIGH is the voltage level)
   digitalWrite(LED_BUILTIN, HIGH);
-  serialprint(turn the LED on (HIGH is the voltage level));
+  serial.println("turn the LED on (HIGH is the voltage level)");
   // wait for a second
   delay(1000);
-  serialprint(wait for a second);
+  serial.println("wait for a second");
   // turn the LED off by making the voltage LOW
   digitalWrite(LED_BUILTIN, LOW);
-  serialprint(turn the LED off by making the voltage LOW);
+  serial.println("turn the LED off by making the voltage LOW");
    // wait for a second
   delay(1000);
-  serialprint(wait for a second);
+  serial.println("wait for a second");
 }

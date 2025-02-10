@@ -74,6 +74,7 @@ jobs:
 #        run: |
 #          cd ${{matrix.project}}
 #          pio run -t upload
+#          idf.py particion-table
 
       - name: Save and Push Build
         run: |

@@ -56,8 +56,8 @@
 extern const char index_html[];
 extern const char main_js[];
 
-#define WIFI_SSID "Mi_AP"
-#define WIFI_PASSWORD "qwertyui"
+#define WIFI_SSID "MiHome"
+#define WIFI_PASSWORD "MyHome151_1"
 
 //#define STATIC_IP                       // uncomment for static IP, set IP below
 #ifdef STATIC_IP
