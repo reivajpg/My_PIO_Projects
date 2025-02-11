@@ -11,10 +11,12 @@
     #define LED_BUILTIN 8
 #endif
 
+#define LED 8
+
 void setup()
 {
   // initialize LED digital pin as an output.
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED, OUTPUT);
 
   Serial.begin(115200);
 }
@@ -22,13 +24,13 @@ void setup()
 void loop()
 {
   // turn the LED on (HIGH is the voltage level)
-  digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(LED, HIGH);
   Serial.println("turn the LED on (HIGH is the voltage level)");
   // wait for a second
   delay(1000);
   Serial.println("wait for a second");
   // turn the LED off by making the voltage LOW
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED, LOW);
   Serial.println("turn the LED off by making the voltage LOW");
    // wait for a second
   delay(1000);
