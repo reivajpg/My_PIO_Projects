@@ -1,0 +1,64 @@
+name: PlatformIO CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - "Projects/ESP_DS18B20_Async_Web_Server" # Activa solo este proyecto
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install PlatformIO Core
+        run: |
+          pip install --upgrade platformio
+          pio --version
+
+      - name: Build Project
+        run: |
+          pio run -d ${{ matrix.project }}
+
+      - name: Save and Push Build
+        run: |
+          # Obtener fecha y hora en formato YYYYMMDDHHMMSS
+          BUILD_DATE=$(date +%Y%m%d%H%M%S)
+
+          # Crear directorio de salida con la fecha y hora
+          OUTPUT_DIR=${{ matrix.project }}/build_output/${BUILD_DATE}
+          mkdir -p $OUTPUT_DIR
+
+          # Mover los archivos .bin al directorio de salida
+          mv -b ${{ matrix.project }}/.pio/build/*/*.bin $OUTPUT_DIR/
+
+          # Listar archivos para verificar
+          ls -Rlh $OUTPUT_DIR
+
+          # Configurar Git
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          # Crear mensaje de commit con fecha y hora
+          COMMIT_MESSAGE="GH Action Build ${{ matrix.project }} - ${BUILD_DATE}"
+
+          # Comprobar si hay cambios antes de hacer commit y push
+          if git diff --exit-code; then
+            git add $OUTPUT_DIR/
+            git commit -am "$COMMIT_MESSAGE"
+            git push
+          fi
