@@ -35,8 +35,10 @@ unsigned long lastTime = 0;
 unsigned long timerDelay = 30000;
 
 // Replace with your network credentials
-const char* ssid = SSID_NAME;
-const char* password = SSID_PASSWORD;
+const char* ssid = "MyHome";
+const char* password = "MyHome151_1";
+Serial.println(SSID_NAME);
+Serial.println(SSID_PASSWORD);
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
