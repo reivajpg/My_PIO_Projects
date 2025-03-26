@@ -1,3 +1,4 @@
+#define CFG_TUSB_MCU OPT_MCU_ESP32C3
 #include <Adafruit_TinyUSB.h>
 
 Adafruit_USBD_HID usb_hid;
