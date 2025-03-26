@@ -4,8 +4,18 @@
 Adafruit_USBD_HID usb_hid;
 
 void setup() {
+    Serial.begin(115200);
+    delay(2000);
+    
     usb_hid.begin();
-    delay(1000);
+    Serial.println("USB HID inicializado");
+
+    // Esperar a que el dispositivo USB sea reconocido
+    while (!TinyUSBDevice.mounted()) {
+        Serial.println("Esperando conexión USB...");
+        delay(500);
+    }
+    Serial.println("USB listo!");
 }
 
 void loop() {
