@@ -16,7 +16,7 @@ jobs:
       matrix:
         project:
 #          - "Projects/ESP_DS18B20_Async_Web_Server" # Activa solo este proyecto
-          - "Projects/esp32c3_tusb_hid" # Activa solo este proyecto
+          - "Projects/esp32c3_ble_hid" # Activa solo este proyecto
 
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.10"
 
       - name: Install PlatformIO Core
         run: |
