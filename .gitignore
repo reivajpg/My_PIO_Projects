@@ -1,6 +1,7 @@
 *.pyc
 .piolibdeps
 .pio
+.vscode
 tasmotizer.cfg
 Projects/arduino-blink/.vscode/c_cpp_properties.json
 Projects/arduino-blink/.vscode/extensions.json

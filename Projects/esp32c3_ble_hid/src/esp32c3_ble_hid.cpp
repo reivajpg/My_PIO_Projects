@@ -5,8 +5,8 @@
 #include "web_page.h"
 
 // Credenciales WiFi
-const char* ssid = "YOUR_SSID";
-const char* password = "YOUR_PASSWORD";
+const char* ssid = "MyHome";
+const char* password = "MyHome151_1";
 
 BleGamepad bleGamepad("Mando Retro C3", "Fabricante DIY", 100);
 WebServer server(80);
@@ -82,12 +82,30 @@ void loop() {
   if(WiFi.status() == WL_CONNECTED){
     server.handleClient();
   }
+  //Serial.println(digitalRead());
+  
+
+  //Serial.println(bleGamepad.sendReport());
 
   if (bleGamepad.isConnected()) {
     bool up = !digitalRead(pinUp) || webUp;
     bool down = !digitalRead(pinDown) || webDown;
     bool left = !digitalRead(pinLeft) || webLeft;
     bool right = !digitalRead(pinRight) || webRight;
+
+///////////////////////////////////////////////
+/*
+          uint8_t* buffer = bleGamepad.getOutputBuffer();
+      Serial.print("Receive: ");
+      
+      for (int i = 0; i < 64; i++) 
+      {
+        Serial.printf("0x%X ",buffer[i]); // Print data from buffer
+      }
+      
+      Serial.println("");
+      delay(1000);
+*///////////////////////////////////////////////
 
     // Lógica para el Hat Switch (Cruceta)
     if (up && right) bleGamepad.setHat1(DPAD_UP_RIGHT);

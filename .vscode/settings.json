@@ -11,5 +11,6 @@
     ],
     "python.analysis.extraPaths": [
         ".vscode/Pico-W-Stub"
-    ]
+    ],
+    "gemini-cli.debug.logging.enabled": false
 }
