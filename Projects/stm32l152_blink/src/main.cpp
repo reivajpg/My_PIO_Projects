@@ -1,12 +1,12 @@
 #include <Arduino.h>
 
 /*
- * Ejemplo básico para STM32L153 (usando configuración de Nucleo L152RE)
+ * Ejemplo básico para STM32L152RCT6 (Configurado como variante de Nucleo L152RE)
  * Este programa hace parpadear un LED conectado al pin definido como LED_BUILTIN.
  *
  * NOTA IMPORTANTES SOBRE EL HARDWARE:
  * 1. La placa 'nucleo_l152re' define LED_BUILTIN como PA5 (Pin D13 en formato Arduino).
- * 2. Si estás usando un chip STM32L153 en una placa personalizada y tu LED está en otro pin
+ * 2. Si estás usando un chip STM32L152RCT6 en una placa personalizada y tu LED está en otro pin
  *    (por ejemplo, PC13, PB6, etc.), debes cambiar `LED_BUILTIN` por el número de pin correspondiente.
  *    Ejemplo: #define MI_LED PC13
  */
@@ -16,7 +16,7 @@
 // Y usa LED_PIN en lugar de LED_BUILTIN en el código.
 
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN PA5 // Valor por defecto si no está definido
+  #define LED_BUILTIN PA5 // Valor por defecto si no está definido (usualmente PA5 o PC13)
 #endif
 
 void setup() {
@@ -30,7 +30,7 @@ void setup() {
     ; // Esperar a que el puerto serial se conecte (solo necesario para USB nativo)
   }
 
-  Serial.println("Iniciando ejemplo Blink en STM32L1...");
+  Serial.println("Iniciando ejemplo Blink en STM32L152RCT6...");
 }
 
 void loop() {
