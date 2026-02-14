@@ -61,5 +61,5 @@ jobs:
           if git diff --exit-code; then
             git add $OUTPUT_DIR/
             git commit -am "$COMMIT_MESSAGE"
-            git push
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
           fi
