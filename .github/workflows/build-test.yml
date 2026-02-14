@@ -16,7 +16,7 @@ jobs:
       matrix:
         project:
 #          - "Projects/ESP_DS18B20_Async_Web_Server" # Activa solo este proyecto
-          - "Projects/stm32l153-blink" # Activa solo este proyecto
+          - "Projects/stm32l153_blink" # Activa solo este proyecto
 
     steps:
       - uses: actions/checkout@v3
