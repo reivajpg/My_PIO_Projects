@@ -2,8 +2,8 @@
 
 
 
-#define LED_PIN               GPIO_PIN_5
-#define LED_GPIO_PORT         GPIOA
+#define LED_PIN               GPIO_PIN_0
+#define LED_GPIO_PORT         GPIOC
 #define LED_GPIO_CLK_ENABLE() __HAL_RCC_GPIOA_CLK_ENABLE()
 
 void SystemClock_Config(void);
