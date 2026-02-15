@@ -23,37 +23,40 @@ Para programar el chip, necesitas conectar un programador ST-Link V2 (original o
 | **SWCLK** | PA14 | Pin de reloj SWD. |
 | **RST** | NRST | (Opcional pero recomendado) Pin de Reset. |
 
-> **Nota:** Si tu programador es un clon chino y no tiene pin de Reset, conecta solo SWDIO, SWCLK, GND y VCC. Si falla la subida, intenta mantener presionado el botón de Reset de tu placa, inicia la subida y suéltalo justo cuando veas "Open On-Chip Debugger" en la terminal.
+## Solución de Problemas de Subida (Upload Troubleshooting)
 
-## Solución de Problemas de Subida (Upload Issues)
+Si has podido subir el código manualmente con **STM32CubeProgrammer** pero falla desde PlatformIO, prueba lo siguiente:
 
-Si obtienes errores como `Error: init mode failed` o `target not halted`:
+### Opción 1: Usar el entorno `nucleo_l152re_cube`
 
-1. **Revisa las conexiones:** Asegúrate de que SWDIO y SWCLK no estén intercambiados.
-2. **Pin de Reset:** Si es posible, conecta el pin NRST del chip al RST del ST-Link.
-3. **Configuración de OpenOCD:**
-   Si usas un clon de ST-Link V2, es posible que necesites cambiar la configuración de subida en `platformio.ini`. Descomenta las líneas de `upload_flags` sugeridas en el archivo `platformio.ini`.
+PlatformIO soporta directamente la herramienta de línea de comandos de STM32CubeProgrammer. Si ya tienes instalada esta herramienta y añadida a tu PATH del sistema, puedes usar este entorno.
 
-   Ejemplo común para clones:
-   ```ini
-   upload_flags = -c transport select hla_swd
-   ```
+**Compilar y subir con STM32CubeProgrammer:**
+```bash
+pio run -e nucleo_l152re_cube --target upload
+```
 
-4. **Boot0:** Asegúrate de que el pin BOOT0 esté conectado a GND a través de una resistencia (o directamente) para arrancar desde la Flash principal.
+### Opción 2: Ajustar OpenOCD (Clones ST-Link V2)
 
-## Cómo compilar y subir
+Si usas un clon chino de ST-Link V2 y obtienes errores como `Error: init mode failed` o `target not halted`, puedes intentar ajustar la configuración de OpenOCD en `platformio.ini` (entorno `nucleo_l152re_stlink`).
 
-1. **Compilar:**
-   ```bash
-   pio run
-   ```
+Descomenta estas líneas en `platformio.ini`:
+```ini
+; Forzar modo HLA (High Level Adapter) que funciona mejor con clones:
+upload_flags = -c transport select hla_swd
+```
+O también probar forzando el ID del chip si no lo detecta automáticamente:
+```ini
+upload_flags = -c set CPUTAPID 0x2ba01477
+```
 
-2. **Subir:**
-   ```bash
-   pio run --target upload
-   ```
+**Compilar y subir con OpenOCD (por defecto):**
+```bash
+pio run -e nucleo_l152re_stlink --target upload
+```
 
-3. **Monitor Serial:**
-   ```bash
-   pio device monitor
-   ```
+## Monitor Serial
+
+```bash
+pio device monitor
+```
