@@ -21,6 +21,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "usbd_cdc_if.h"
+#include <stdio.h>
+#include "usb_device.h"
+#include <string.h>
+#include "datalog.h"
 
 /* USER CODE END Includes */
 
@@ -31,6 +36,15 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#undef GREEN_Pin
+#undef GREEN_GPIO_Port
+#undef RED_Pin
+#undef RED_GPIO_Port
+
+#define GREEN_Pin GPIO_PIN_0
+#define GREEN_GPIO_Port GPIOC
+#define RED_Pin GPIO_PIN_8
+#define RED_GPIO_Port GPIOB
 
 /* USER CODE END PD */
 
@@ -41,6 +55,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
+I2C_HandleTypeDef hi2c2;
 
 LCD_HandleTypeDef hlcd;
 
@@ -52,22 +67,261 @@ PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
 
+uint8_t Counter = 0;
+static void MX_LCD_Init(void);
+static void MX_RTC_Init(void);
+static void MX_SPI1_Init(void);
+// static void MX_USB_PCD_Init(void);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
+static void MX_I2C2_Init(void);
 static void MX_LCD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_USB_PCD_Init(void);
+/* static void MX_USB_PCD_Init(void); */
 /* USER CODE BEGIN PFP */
-
+void I2C_Scan(void);
+void I2C1_ClearBus(void);
+void SoftI2C_Scan_All(void);
+float Read_Temp(void);
+int __io_putchar(int ch);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+extern USBD_HandleTypeDef hUsbDeviceFS;
+
+int __io_putchar(int ch)
+{
+  static uint8_t buf[64];
+  static uint8_t idx = 0;
+
+  buf[idx++] = (uint8_t)ch;
+
+  /* Enviar si el buffer está lleno o si encontramos un carácter de nueva línea */
+  if (idx >= 64 || ch == '\n' || ch == '\r') {
+      /* Verificar si el dispositivo está configurado (conectado) para evitar bloqueo */
+      if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED) {
+          idx = 0;
+          return ch;
+      }
+
+      /* Esperar a que el USB esté libre para transmitir con Timeout */
+      uint32_t start = HAL_GetTick();
+      while (CDC_Transmit_FS(buf, idx) == USBD_BUSY) {
+          if (HAL_GetTick() - start > 50) { // 50ms timeout para evitar bloqueo infinito
+              idx = 0;
+              return ch;
+          }
+      }
+      idx = 0;
+  }
+  return ch;
+}
+
+void I2C_Scan(void) {
+    HAL_StatusTypeDef result;
+    uint8_t devices_found = 0;
+
+    printf("\r\n--- Iniciando Escaneo I2C1 Hardware (Config Actual: PB6/PB7) ---\r\n");
+    for (uint16_t i = 1; i < 128; i++) {
+        result = HAL_I2C_IsDeviceReady(&hi2c1, (uint16_t)(i << 1), 2, 10);
+        if (result == HAL_OK) {
+            printf("I2C1: Dispositivo encontrado en: 0x%02X\r\n", i);
+            devices_found++;
+        } else if (i == 0x48) {
+            printf("I2C1: Fallo en 0x48 (Sensor). Error Code: %d\r\n", result);
+        }
+    }
+
+    printf("\r\n--- Iniciando Escaneo I2C2 (PB10/PB11) ---\r\n");
+    for (uint16_t i = 1; i < 128; i++) {
+        result = HAL_I2C_IsDeviceReady(&hi2c2, (uint16_t)(i << 1), 2, 10);
+        if (result == HAL_OK) {
+            printf("I2C2: Dispositivo encontrado en: 0x%02X\r\n", i);
+            devices_found++;
+        }
+    }
+
+    if (devices_found == 0) printf("No se encontraron dispositivos I2C.\r\n");
+    printf("--- Fin Escaneo ---\r\n");
+}
+
+/* --- Implementación I2C por Software (Bit Banging) Dinámico --- */
+void Soft_Delay(void) {
+    for (volatile int i = 0; i < 100; i++) { __NOP(); }
+}
+
+void Soft_Init(GPIO_TypeDef* port, uint16_t scl, uint16_t sda) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    
+    if(port == GPIOB) __HAL_RCC_GPIOB_CLK_ENABLE();
+    
+    GPIO_InitStruct.Pin = scl | sda;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(port, &GPIO_InitStruct);
+    
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_SET);
+}
+
+void Soft_Start(GPIO_TypeDef* port, uint16_t scl, uint16_t sda) {
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_SET);
+    Soft_Delay();
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_RESET);
+    Soft_Delay();
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_RESET);
+}
+
+void Soft_Stop(GPIO_TypeDef* port, uint16_t scl, uint16_t sda) {
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_SET);
+    Soft_Delay();
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_SET);
+    Soft_Delay();
+}
+
+uint8_t Soft_WriteByte(GPIO_TypeDef* port, uint16_t scl, uint16_t sda, uint8_t data) {
+    for(uint8_t i = 0; i < 8; i++) {
+        if(data & 0x80) HAL_GPIO_WritePin(port, sda, GPIO_PIN_SET);
+        else HAL_GPIO_WritePin(port, sda, GPIO_PIN_RESET);
+        data <<= 1;
+        Soft_Delay();
+        HAL_GPIO_WritePin(port, scl, GPIO_PIN_SET);
+        Soft_Delay();
+        HAL_GPIO_WritePin(port, scl, GPIO_PIN_RESET);
+    }
+    // ACK
+    HAL_GPIO_WritePin(port, sda, GPIO_PIN_SET);
+    Soft_Delay();
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_SET);
+    Soft_Delay();
+    uint8_t ack = (HAL_GPIO_ReadPin(port, sda) == GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(port, scl, GPIO_PIN_RESET);
+    return ack;
+}
+
+void SoftI2C_Scan_Port(GPIO_TypeDef* port, uint16_t scl, uint16_t sda, const char* name) {
+    printf("\r\n--- Escaneando %s (SCL: PB%d, SDA: PB%d) ---\r\n", 
+           name, 
+           (scl == GPIO_PIN_6) ? 6 : (scl == GPIO_PIN_8) ? 8 : (scl == GPIO_PIN_10) ? 10 : 0,
+           (sda == GPIO_PIN_7) ? 7 : (sda == GPIO_PIN_9) ? 9 : (sda == GPIO_PIN_11) ? 11 : 0);
+
+    Soft_Init(port, scl, sda);
+
+    /* Diagnóstico de Líneas */
+    uint8_t sda_state = HAL_GPIO_ReadPin(port, sda);
+    uint8_t scl_state = HAL_GPIO_ReadPin(port, scl);
+    
+    printf("Estado Inicial -> SDA: %d, SCL: %d\r\n", sda_state, scl_state);
+
+    if (sda_state == GPIO_PIN_RESET) {
+        printf("ERROR: SDA pegado a LOW. Saltando...\r\n");
+        return;
+    }
+
+    uint8_t found = 0;
+    for(uint16_t i = 1; i < 128; i++) {
+        Soft_Start(port, scl, sda);
+        if(Soft_WriteByte(port, scl, sda, i << 1)) {
+            printf("DISPOSITIVO ENCONTRADO EN 0x%02X !!!\r\n", i);
+            found++;
+        }
+        Soft_Stop(port, scl, sda);
+        Soft_Delay();
+    }
+    if (found == 0) printf("No se encontraron dispositivos.\r\n");
+}
+
+void SoftI2C_Scan_All(void) {
+    SoftI2C_Scan_Port(GPIOB, GPIO_PIN_6, GPIO_PIN_7, "I2C1 Std");
+    SoftI2C_Scan_Port(GPIOB, GPIO_PIN_6, GPIO_PIN_9, "I2C1 Mix");
+    SoftI2C_Scan_Port(GPIOB, GPIO_PIN_8, GPIO_PIN_9, "I2C1 Alt");
+    SoftI2C_Scan_Port(GPIOB, GPIO_PIN_10, GPIO_PIN_11, "I2C2 Std");
+    
+    /* Restaurar configuración original de pines */
+    MX_I2C1_Init();
+    MX_I2C2_Init();
+    
+    /* Restaurar configuración del LED Rojo (PB8) por si lo usamos */
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin = RED_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(RED_GPIO_Port, &GPIO_InitStruct);
+}
+
+/* Función para leer temperatura del sensor I2C (LM75/PCT2075) */
+float Read_Temp(void) {
+    uint8_t buf[2];
+    int16_t val;
+    float temp_c;
+    
+    /* Dirección 0x48 desplazada a la izquierda = 0x90 */
+    if (HAL_I2C_Master_Receive(&hi2c1, (0x48 << 1), buf, 2, 100) == HAL_OK) {
+        /* Convertir datos (Big Endian) */
+        val = (int16_t)((buf[0] << 8) | buf[1]);
+        /* Los sensores LM75 suelen tener resolución de 0.5°C o 0.125°C. 
+           El formato es complemento a 2, desplazado 8 bits (o 5 para 11-bit).
+           Para LM75 estándar: val / 256.0 funciona bien. */
+        temp_c = val / 256.0f;
+        return temp_c;
+    }
+    else {
+        printf("Error lectura I2C: 0x%08lX (State: %d)\r\n", HAL_I2C_GetError(&hi2c1), hi2c1.State);
+    }
+    return -999.0f; /* Error */
+}
+
+/* Función para desbloquear el bus I2C si un esclavo lo mantiene ocupado (SDA Low) */
+void I2C1_ClearBus(void) {
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+    // 1. Habilitar reloj GPIOB
+    __HAL_RCC_GPIOB_CLK_ENABLE();
+
+    // 2. Configurar SCL (PB6) y SDA (PB7) como Salida Open-Drain
+    GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
+    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // 3. Poner SDA Alto
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+
+    // 4. Generar hasta 20 pulsos de reloj en SCL para liberar esclavos
+    for (int i = 0; i < 20; i++) {
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET); // SCL Low
+        HAL_Delay(1);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);   // SCL High
+        HAL_Delay(1);
+        
+        /* Si SDA se libera (se pone en ALTO), paramos */
+        if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == GPIO_PIN_SET) {
+            break;
+        }
+    }
+
+    // 5. Generar condición de STOP
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
+    HAL_Delay(1);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_SET);
+
+    /* IMPORTANTE: Des-inicializar los pines para liberarlos antes de que el periférico I2C los tome */
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_6 | GPIO_PIN_7);
+}
 
 /* USER CODE END 0 */
 
@@ -100,19 +354,69 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  I2C1_ClearBus(); /* Intentar recuperar el bus antes de inicializar */
+  HAL_Delay(10);   /* Pequeña pausa para estabilizar líneas */
   MX_I2C1_Init();
+  MX_I2C2_Init();
   MX_LCD_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
-  MX_USB_PCD_Init();
+  /* MX_USB_PCD_Init(); */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  HAL_LCD_Clear(&hlcd); /* Limpiar basura de la pantalla LCD */
+  HAL_Delay(1000);
+  printf("\r\n=== INICIO DE PRUEBAS TEMPTALE ULTRA ===\r\n");
+  printf("Activando pines auxiliares (PB2, PB12, PB4, PB5, PA15, PD2)...\r\n");
+  printf("USB CDC: OK\r\n");
+  
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  uint32_t last_tick = 0;
+  RTC_TimeTypeDef sTime;
+  RTC_DateTypeDef sDate;
+  float current_temp = 0.0f;
+
   while (1)
   {
+    if (HAL_GPIO_ReadPin(START_GPIO_Port, START_Pin) == GPIO_PIN_RESET) {
+        HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_SET);
+        printf("Boton START presionado -> LED VERDE ON\r\n");
+        I2C_Scan(); /* Ejecutar escáner bajo demanda */
+        
+        current_temp = Read_Temp();
+        printf("Lectura Sensor I2C: %.2f C\r\n", current_temp);
+        
+        SoftI2C_Scan_All(); /* Ejecutar escáner por software en TODOS los pines */
+        SPI_Flash_ReadID(); /* Ejecutar prueba SPI */
+        Log_ReadAll(); /* Leer logs guardados */
+        HAL_Delay(200);
+    } else {
+        HAL_GPIO_WritePin(GREEN_GPIO_Port, GREEN_Pin, GPIO_PIN_RESET);
+    }
+
+    if (HAL_GPIO_ReadPin(STOP_GPIO_Port, STOP_Pin) == GPIO_PIN_RESET) {
+        HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_SET);
+        printf("Boton STOP presionado -> LED ROJO ON\r\n");
+        
+        /* Guardar un log con temperatura real */
+        current_temp = Read_Temp();
+        Log_SaveCurrent(current_temp);
+        
+        HAL_Delay(200);
+    } else {
+        HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+    }
+
+    if (HAL_GetTick() - last_tick > 1000) {
+        last_tick = HAL_GetTick();
+        HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+        HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+        printf("RTC Time: %02d:%02d:%02d\r\n", sTime.Hours, sTime.Minutes, sTime.Seconds);
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -207,6 +511,37 @@ static void MX_I2C1_Init(void)
 }
 
 /**
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C2_Init(void)
+{
+
+  /* 1. Habilitar reloj ANTES de resetear (Crucial) */
+  __HAL_RCC_I2C1_CLK_ENABLE();
+  /* 2. Resetear el periférico I2C1 para desbloquearlo si está en estado BUSY */
+  __HAL_RCC_I2C1_FORCE_RESET();
+  HAL_Delay(2);
+  __HAL_RCC_I2C1_RELEASE_RESET();
+
+  hi2c2.Instance = I2C2;
+  hi2c1.Init.ClockSpeed = 10000; /* Bajamos a 10kHz para máxima estabilidad */
+  hi2c2.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c2.Init.OwnAddress1 = 0;
+  hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c2.Init.OwnAddress2 = 0;
+  hi2c2.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c2.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+}
+
+/**
   * @brief LCD Initialization Function
   * @param None
   * @retval None
@@ -224,8 +559,8 @@ static void MX_LCD_Init(void)
   hlcd.Instance = LCD;
   hlcd.Init.Prescaler = LCD_PRESCALER_1;
   hlcd.Init.Divider = LCD_DIVIDER_16;
-  hlcd.Init.Duty = LCD_DUTY_1_2;
-  hlcd.Init.Bias = LCD_BIAS_1_4;
+  hlcd.Init.Duty = LCD_DUTY_1_4; /* Cambiado a 1/4 Duty para evitar segmentos fantasma */
+  hlcd.Init.Bias = LCD_BIAS_1_3; /* Cambiado a 1/3 Bias (estándar 3V) */
   hlcd.Init.VoltageSource = LCD_VOLTAGESOURCE_INTERNAL;
   hlcd.Init.Contrast = LCD_CONTRASTLEVEL_0;
   hlcd.Init.DeadTime = LCD_DEADTIME_0;
@@ -368,6 +703,7 @@ static void MX_SPI1_Init(void)
   * @param None
   * @retval None
   */
+#if 0
 static void MX_USB_PCD_Init(void)
 {
 
@@ -393,6 +729,7 @@ static void MX_USB_PCD_Init(void)
   /* USER CODE END USB_Init 2 */
 
 }
+#endif
 
 /**
   * @brief GPIO Initialization Function
@@ -417,6 +754,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level : Pines sospechosos de Enable/Power */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_12|GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level : PA4 (SPI CS) */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
   /*Configure GPIO pin : GREEN_Pin */
   GPIO_InitStruct.Pin = GREEN_Pin;
@@ -447,6 +790,28 @@ static void MX_GPIO_Init(void)
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  /* Configurar PA4 como Salida Push-Pull para CS de SPI */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* Inicializar PA15 (JTDI) y PD2 como Salidas High por si son Enable */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+  GPIO_InitStruct.Pin = GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, GPIO_PIN_SET);
+  GPIO_InitStruct.Pin = GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
