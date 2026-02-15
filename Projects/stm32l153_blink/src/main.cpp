@@ -16,7 +16,7 @@
 // Y usa LED_PIN en lugar de LED_BUILTIN en el código.
 
 #ifndef LED_BUILTIN
-  #define LED_BUILTIN PA5 // Valor por defecto si no está definido
+  #define LED_BUILTIN PB8 // Valor por defecto si no está definido
 #endif
 
 void setup() {
