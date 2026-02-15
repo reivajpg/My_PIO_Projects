@@ -18,10 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "usb_device.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 //#include <stdio.h>
+#include "usbd_cdc_if.h"
+#include "stdio.h"
+
+#include <string.h>
 
 /* USER CODE END Includes */
 
@@ -43,7 +47,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t Counter = 0;
+char buffer[64]; // Buffer para formatear la cadena
+extern USBD_HandleTypeDef hUsbDeviceFS;
+volatile uint8_t start_btn_pressed = 0; // Bandera para sincronizar con el main
+volatile uint8_t stop_btn_pressed = 0; // Bandera para sincronizar con el main
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -51,6 +59,36 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
 //extern void initialise_monitor_handles(void);
+
+/* Redirección de printf a USB CDC */
+int __io_putchar(int ch)
+{
+  static uint8_t buf[64];
+  static uint8_t idx = 0;
+
+  buf[idx++] = (uint8_t)ch;
+
+  /* Enviar si el buffer está lleno o si encontramos un carácter de nueva línea */
+  if (idx >= 64 || ch == '\n' || ch == '\r') {
+      /* Verificar si el dispositivo está configurado (conectado) para evitar bloqueo */
+      if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED) {
+          idx = 0;
+          return ch;
+      }
+
+      /* Esperar a que el USB esté libre para transmitir con Timeout */
+      uint32_t start = HAL_GetTick();
+      while (CDC_Transmit_FS(buf, idx) == USBD_BUSY) {
+          if (HAL_GetTick() - start > 50) { // 50ms timeout para evitar bloqueo infinito
+              idx = 0;
+              return ch;
+          }
+      }
+      idx = 0;
+  }
+  
+  return ch;
+}
 
 /* USER CODE END PFP */
 
@@ -71,19 +109,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) // START (PA0) incrementa un cont
     		counter++;
     		HAL_GPIO_TogglePin(GREEN_GPIO_Port, GREEN_Pin); // Toggle LED verde
     		last_start_tick = HAL_GetTick();
-
+            start_btn_pressed = 1; // Levantar bandera. NO usar printf aquí.
     	}
     }
-    else if (GPIO_Pin == STOP_Pin)
+    else if (GPIO_Pin == STOP_Pin) // PA0
     {
         if (HAL_GetTick() - last_stop_tick > 200) // 200 ms debounce
         {
-            counter = 0;
+            //counter = 0;
             HAL_GPIO_TogglePin(RED_GPIO_Port, RED_Pin); // Toggle LED rojo
             last_stop_tick = HAL_GetTick();
+            stop_btn_pressed = 1; // Levantar bandera. NO usar printf aquí.
         }
     }
-
+    counter = 0;
 }
 
 /* USER CODE END 0 */
@@ -117,23 +156,52 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   //initialise_monitor_handles(); // Inicializar Semihosting
   //printf("Sistema iniciado correctamente.\r\n");
  // uint8_t i=0;
- int STATE = 0;
+ int START_STATE = 0;
+ int GREEN_STATE = 0;
+ int STOP_STATE = 0;
+ int RED_STATE = 0;
+ //int counter = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  STATE = HAL_GPIO_ReadPin(GPIOA, STOP_Pin);
-	  if (STATE==0)
+      /* Procesar la pulsación del botón Start fuera de la interrupción 
+      if (start_btn_pressed) {
+          start_btn_pressed = 0;
+          printf("Boton Start presionado. Contador incrementado: %d\r\n", counter);
+      }
+      */
+
+      /* Procesar la pulsación del botón Stop fuera de la interrupción 
+      if (stop_btn_pressed) {
+          stop_btn_pressed = 0;
+          printf("Boton Stop presionado. Contador incrementado: %d\r\n", counter);
+      }
+      */
+
+    START_STATE = HAL_GPIO_ReadPin(GPIOA, START_Pin);
+	  if (START_STATE==0)
 	    {
-		  //HAL_GPIO_TogglePin(GREEN_GPIO_Port, GREEN_Pin);
+		  HAL_GPIO_TogglePin(GREEN_GPIO_Port, GREEN_Pin);
+          GREEN_STATE = HAL_GPIO_ReadPin(GREEN_GPIO_Port, GREEN_Pin);
+		  printf("Boton Start presionado. GREEN_STATE: %d\r\n", GREEN_STATE );
+		  HAL_Delay(500);
+	    }
+
+
+	  STOP_STATE = HAL_GPIO_ReadPin(GPIOA, STOP_Pin);
+	  if (STOP_STATE==0)
+	    {
 		  HAL_GPIO_TogglePin(RED_GPIO_Port, RED_Pin);
-		  //printf("Boton presionado. Estado: %d\r\n", STATE);
+          RED_STATE = HAL_GPIO_ReadPin(RED_GPIO_Port, RED_Pin);
+		  printf("Boton Stop presionado. RED_STATE: %d\r\n", RED_STATE );
 		  HAL_Delay(500);
 	    }
     /* USER CODE END WHILE */
@@ -162,7 +230,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL6; // 16MHz * 6 = 96MHz (VCO)
+  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLL_DIV3; // 96MHz / 3 = 32MHz (SysClk)
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -172,12 +243,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -215,7 +286,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : START_Pin */
   GPIO_InitStruct.Pin = START_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  //GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(START_GPIO_Port, &GPIO_InitStruct);
 
@@ -233,18 +305,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(RED_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  // No necesitamos habilitar NVIC EXTI si estamos usando GPIO_MODE_INPUT (Polling)
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
-
-  /* Habilitar interrupciones EXTI0 (PA0) y EXTI1 (PA1) */
-  //HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  //HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-
+  // Interrupciones deshabilitadas para evitar conflictos con USB printf en este modo simple.
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
