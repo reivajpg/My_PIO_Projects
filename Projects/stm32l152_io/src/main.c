@@ -81,7 +81,7 @@ static void MX_SPI1_Init(void);
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
-static void MX_I2C2_Init(void);
+// static void MX_I2C2_Init(void);
 static void MX_LCD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI1_Init(void);
@@ -346,6 +346,7 @@ static void MX_I2C1_Init(void)
   * @param None
   * @retval None
   */
+#if 0
 static void MX_I2C2_Init(void)
 {
 
@@ -371,6 +372,7 @@ static void MX_I2C2_Init(void)
   }
 
 }
+#endif
 
 /**
   * @brief LCD Initialization Function
