@@ -185,7 +185,7 @@ int main(void)
   I2C1_ClearBus(); /* Intentar recuperar el bus antes de inicializar */
   HAL_Delay(10);   /* Pequeña pausa para estabilizar líneas */
   MX_I2C1_Init();
-  MX_I2C2_Init();
+  // MX_I2C2_Init(); /* Desactivado: Pines PB10/PB11 usados por LCD */
   MX_LCD_Init();
   MX_RTC_Init();
   MX_SPI1_Init();
@@ -627,14 +627,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* Inicializar PA15 (JTDI) y PD2 como Salidas High por si son Enable */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-  GPIO_InitStruct.Pin = GPIO_PIN_15;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
