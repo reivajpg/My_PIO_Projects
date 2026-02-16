@@ -200,28 +200,35 @@ void HAL_LCD_MspInit(LCD_HandleTypeDef* hlcd)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
     /**LCD GPIO Configuration
     PA2     ------> LCD_SEG1
     PA3     ------> LCD_SEG2
-    PC4     ------> LCD_SEG22
-    PC5     ------> LCD_SEG23
+    PA6     ------> LCD_SEG3
+    PA7     ------> LCD_SEG4
     PB0     ------> LCD_SEG5
     PB1     ------> LCD_SEG6
-    PB10     ------> LCD_SEG10
-    PB11     ------> LCD_SEG11
-    PA8     ------> LCD_COM0
-    PA9     ------> LCD_COM1
     PB3     ------> LCD_SEG7
     PB4     ------> LCD_SEG8
     PB5     ------> LCD_SEG9
+    PB10    ------> LCD_SEG10
+    PB11    ------> LCD_SEG11
+    PB12    ------> LCD_SEG12
+    PB13    ------> LCD_SEG13
+    PB14    ------> LCD_SEG14
+    PB15    ------> LCD_SEG15
+    PA8     ------> LCD_COM0
+    PA9     ------> LCD_COM1
     PA10    ------> LCD_COM2
     PA15    ------> LCD_SEG17
+    PC4     ------> LCD_SEG22
+    PC5     ------> LCD_SEG23
     PC10    ------> LCD_SEG28
     PC11    ------> LCD_SEG29
     PC12    ------> LCD_SEG30
     PD2     ------> LCD_SEG31
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10;
+    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_15;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -236,14 +243,21 @@ void HAL_LCD_MspInit(LCD_HandleTypeDef* hlcd)
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
     /* Agregamos PB3, PB4 y PB5 (SEG7, SEG8, SEG9) */
-    /* Agregamos PB9 (COM3), PB10 (SEG10), PB11 (SEG11) */
+    /* Agregamos PB9 (COM3), PB10-PB15 (SEG10-SEG15) */
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1
-                          |GPIO_PIN_3|GPIO_PIN_5|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15; 
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15; 
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF11_LCD;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
     /* USER CODE BEGIN LCD_MspInit 1 */
 
@@ -285,12 +299,14 @@ void HAL_LCD_MspDeInit(LCD_HandleTypeDef* hlcd)
     PB5     ------> LCD_SEG9
     PA10    ------> LCD_COM2
     */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_15);
 
     HAL_GPIO_DeInit(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12);
 
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_1
-                          |GPIO_PIN_3|GPIO_PIN_5|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15);
+
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_2);
 
     /* USER CODE BEGIN LCD_MspDeInit 1 */
 

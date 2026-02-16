@@ -188,13 +188,12 @@ int main(void)
   // MX_I2C2_Init(); /* Desactivado: Pines PB10/PB11 usados por LCD */
   MX_LCD_Init();
   MX_RTC_Init();
-  MX_SPI1_Init();
+  // MX_SPI1_Init(); /* Desactivado: Pines PA6/PA7 usados por LCD */
   /* MX_USB_PCD_Init(); */
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   HAL_LCD_Clear(&hlcd); /* Limpiar basura de la pantalla LCD */
   // LCD_Test_All_Segments(); /* Descomentar para mapear segmentos visualmente */
-  LCD_Test_All_Segments(); /* Descomentar para mapear segmentos visualmente */
   HAL_Delay(1000);
   printf("\r\n=== INICIO DE PRUEBAS TEMPTALE ULTRA ===\r\n");
   printf("Activando pines auxiliares (PB2, PB12, PB4, PB5, PA15, PD2)...\r\n");
@@ -238,6 +237,11 @@ int main(void)
         Log_SaveCurrent(current_temp);
         
         HAL_Delay(200);
+        ///////////////////////////////////////////
+        LCD_Test_All_Segments(); /* Descomentar para mapear segmentos visualmente */
+
+
+
     } else {
         HAL_GPIO_WritePin(RED_GPIO_Port, RED_Pin, GPIO_PIN_RESET);
     }
@@ -498,6 +502,7 @@ static void MX_RTC_Init(void)
   * @param None
   * @retval None
   */
+#if 0
 static void MX_SPI1_Init(void)
 {
 
@@ -530,6 +535,7 @@ static void MX_SPI1_Init(void)
   /* USER CODE END SPI1_Init 2 */
 
 }
+#endif
 
 /**
   * @brief USB Initialization Function

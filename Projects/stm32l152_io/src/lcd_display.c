@@ -13,7 +13,6 @@ extern LCD_HandleTypeDef hlcd;
  * 3. Cuando se encienda el segmento 'A' (barra superior) del primer dígito,
  *    anota el COM y SEG que muestra el monitor serie.
  * 4. Rellena las estructuras de abajo.
- *    NOTA: Solo se usan COM0 y COM2.
  * 
  * Esquema de 7 Segmentos:
  *      A
@@ -30,7 +29,7 @@ typedef struct {
 
 /* --- MAPEO DEL DÍGITO 1 (DECENAS) --- */
 const Digit_Map_t Digit_Tens = {
-    .com = {0, 0, 0, 0, 0, 0, 0}, // Rellenar: A, B, C, D, E, F, G (Usar 0 o 2)
+    .com = {0, 0, 0, 0, 0, 0, 0}, // Rellenar: A, B, C, D, E, F, G
     .seg = {0, 0, 0, 0, 0, 0, 0}  // Rellenar: A, B, C, D, E, F, G
 };
 
@@ -41,7 +40,19 @@ const Digit_Map_t Digit_Units = {
 };
 
 /* --- MAPEO DEL DÍGITO 3 (DECIMALES) --- */
-const Digit_Map_t Digit_Decimals = {
+const Digit_Map_t Digit_Digit3 = {
+    .com = {0, 0, 0, 0, 0, 0, 0},
+    .seg = {0, 0, 0, 0, 0, 0, 0}
+};
+
+/* --- MAPEO DEL DÍGITO 4 (DECIMALES) --- */
+const Digit_Map_t Digit_Digit4 = {
+    .com = {0, 0, 0, 0, 0, 0, 0},
+    .seg = {0, 0, 0, 0, 0, 0, 0}
+};
+
+/* --- MAPEO DEL DÍGITO 5 (solo un 1) --- */
+const Digit_Map_t Digit_Digit5 = {
     .com = {0, 0, 0, 0, 0, 0, 0},
     .seg = {0, 0, 0, 0, 0, 0, 0}
 };
@@ -87,10 +98,12 @@ void LCD_WriteDigit(const Digit_Map_t *map, uint8_t number) {
         uint8_t seg = map->seg[i];
         uint32_t mask = (1UL << seg);
         
+        /* CORRECCIÓN CRÍTICA: Multiplicar com * 2 para acceder al registro correcto */
+        /* LCD_RAM[0]=COM0, LCD_RAM[2]=COM1, LCD_RAM[4]=COM2, LCD_RAM[6]=COM3 */
         if (active) {
-            LCD->RAM[com] |= mask;
+            LCD->RAM[com * 2] |= mask;
         } else {
-            LCD->RAM[com] &= ~mask;
+            LCD->RAM[com * 2] &= ~mask;
         }
     }
 }
@@ -98,8 +111,9 @@ void LCD_WriteDigit(const Digit_Map_t *map, uint8_t number) {
 /* Función interna para escribir un símbolo */
 void LCD_WriteSymbol(uint8_t com, uint8_t seg, uint8_t state) {
     uint32_t mask = (1UL << seg);
-    if (state) LCD->RAM[com] |= mask;
-    else       LCD->RAM[com] &= ~mask;
+    /* CORRECCIÓN CRÍTICA: Multiplicar com * 2 */
+    if (state) LCD->RAM[com * 2] |= mask;
+    else       LCD->RAM[com * 2] &= ~mask;
 }
 
 void LCD_ShowTemp(float temperature) {
@@ -120,7 +134,7 @@ void LCD_ShowTemp(float temperature) {
     // Escribir dígitos
     if (tens > 0) LCD_WriteDigit(&Digit_Tens, tens); // Supresión de cero a la izquierda
     LCD_WriteDigit(&Digit_Units, units);
-    LCD_WriteDigit(&Digit_Decimals, decimals);
+    LCD_WriteDigit(&Digit_Digit3, decimals);
 
     // Símbolos fijos
     LCD_WriteSymbol(Sym_Point_COM, Sym_Point_SEG, 1);   // Punto decimal
@@ -130,32 +144,112 @@ void LCD_ShowTemp(float temperature) {
 }
 
 void LCD_Test_All_Segments(void) {
-    printf("\r\n=== MODO TEST LCD: INICIANDO BARRIDO (Solo COM0 y COM2) ===\r\n");
+    printf("\r\n=== MODO TEST LCD INTERACTIVO ===\r\n");
+    printf("Controles:\r\n");
+    printf("  - STOP (PA1): Pausar / Avanzar paso a paso\r\n");
+    printf("  - START (PA0): Reanudar barrido automatico\r\n");
+    
     printf("Anota COM y SEG de cada segmento que veas.\r\n");
     LCD_Clear();
     
-    /* Recorrer solo COM0 y COM2 ya que COM1 y COM3 no están conectados */
-    uint8_t active_coms[] = {0, 2};
+    /* Esperar a que se suelte el botón STOP si se entró con él presionado */
+    while(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_RESET);
+    HAL_Delay(100);
+
+    uint8_t paused = 0;
     
-    for (int i = 0; i < 2; i++) {
-        int com = active_coms[i];
+    for (int com = 0; com < 4; com++) {
         
         /* Recorrer los 32 Segmentos posibles */
         for (int seg = 0; seg < 32; seg++) {
             uint32_t mask = (1UL << seg);
             
             /* Encender pixel */
-            LCD->RAM[com] |= mask;
+            /* CORRECCIÓN CRÍTICA: Multiplicar com * 2 */
+            LCD->RAM[com * 2] |= mask;
             HAL_LCD_UpdateDisplayRequest(&hlcd);
             
             printf("ENCENDIDO: COM %d - SEG %d\r\n", com, seg);
             
-            HAL_Delay(500); // 500ms para dar tiempo a mirar
+            /* Lógica de retardo y botones */
+            uint32_t start_tick = HAL_GetTick();
+            uint32_t delay_ms = 500; // 500ms Tiempo por segmento en modo automático
+            
+            while ((HAL_GetTick() - start_tick < delay_ms) || paused) {
+                /* Chequear STOP (PA1) para Pausar o Avanzar */
+                if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_RESET) {
+                    HAL_Delay(200); // Debounce
+                    if (!paused) {
+                        paused = 1;
+                        printf("--- PAUSADO (STOP: Avanzar, START: Reanudar) ---\r\n");
+                    } else {
+                        // Si ya estaba pausado, STOP avanza un paso (rompe el while)
+                        break; 
+                    }
+                }
+                
+                /* Chequear START (PA0) para Reanudar */
+                if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET) {
+                    HAL_Delay(200); // Debounce
+                    paused = 0;
+                    printf("--- REANUDANDO ---\r\n");
+                    break; // Salir del while para ir al siguiente segmento
+                }
+            }
             
             /* Apagar pixel (comentar si quieres que se queden fijos) */
-            LCD->RAM[com] &= ~mask;
+            LCD->RAM[com * 2] &= ~mask;
             HAL_LCD_UpdateDisplayRequest(&hlcd);
         }
     }
     printf("=== FIN BARRIDO ===\r\n");
 }
+
+
+/*
+// 
+// 
+// 
+// 
+// 
+// --- MAPEO DE Simbolos --- 
+const Digit_Map_t simbols = {
+        // {1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14, 15, 16}, // 1:(grado c), 2:(-) , 3:(diagonal de x), 4:(corazon), 5:(sol), 6:(RH), 7:(izq del check), 8:(flecha up.), 9:(up.), 10:(temp), 11:(dwn.)
+    .com = {0, 2, 2, 0, 0, 2, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0}, // Rellenar: A, B, C, D, E, F, G (Usar 0 o 2)
+    .seg = {2, 2,13,26,27, 1,13,14,22,14,22, 0, 0, 0, 0, 0}  // Rellenar: A, B, C, D, E, F, G
+};
+
+// --- MAPEO DEL DÍGITO 1 (DECENAS) --- 
+const Digit_Map_t Digit_Tens = {
+        // {A, B, C, D, E, F, G
+    .com = {0, 2, 0, 0, 0, 2, 0}, // Rellenar: A, B, C, D, E, F, G (Usar 0 o 2)
+    .seg = {5, 5, 0, 0,23,23, 0}  // Rellenar: A, B, C, D, E, F, G
+};
+
+// --- MAPEO DEL DÍGITO 2 (UNIDADES) --- 
+const Digit_Map_t Digit_Units = {
+        // {A, B, C, D, E, F, G
+    .com = {0, 2, 0, 0, 0, 0, 0},
+    .seg = {0,12, 0, 0, 0, 0, 0}
+};
+
+// --- MAPEO DEL DÍGITO 3 (DECIMALES) --- 
+const Digit_Map_t Digit_Digit3 = {
+        // {A, B, C, D, E, F, G
+    .com = {0, 2, 0, 0, 0, 2, 0},
+    .seg ={12,24, 0, 0, 6, 6, 0}
+};
+
+// --- MAPEO DEL DÍGITO 4 (DECIMALES) --- 
+const Digit_Map_t Digit_Digit4 = {
+        // {A, B, C, D, E, F, G
+    .com = {0, 0, 0, 0, 0, 2, 0}, // el numero 1 es com0, seg25
+    .seg ={24, 0, 0, 0,15,15, 0}
+};
+// --- MAPEO DEL DÍGITO 5 (solo un 1) --- 
+const Digit_Map_t Digit_Digit5 = {
+        // {1, ., -, P, E, F, G} P(probe), 
+    .com = {0, 2, 2, 2, 0, 0, 0}, // el numero 1 es com0, seg25
+    .seg ={25,25,26,27, 0, 0, 0}
+};
+*/
