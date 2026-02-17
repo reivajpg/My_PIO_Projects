@@ -27,39 +27,40 @@ typedef struct {
     uint8_t seg[7]; // SEG index (0..31) para A, B, C, D, E, F, G
 } Digit_Map_t;
 
-/* --- MAPEO DEL DÍGITO 1 (DECENAS) --- */
-const Digit_Map_t Digit_Tens = {
-    .com = {0, 0, 0, 0, 0, 0, 0}, // Rellenar: A, B, C, D, E, F, G
-    .seg = {0, 0, 0, 0, 0, 0, 0}  // Rellenar: A, B, C, D, E, F, G
-};
-
-/* --- MAPEO DEL DÍGITO 2 (UNIDADES) --- */
-const Digit_Map_t Digit_Units = {
-    .com = {0, 0, 0, 0, 0, 0, 0},
-    .seg = {0, 0, 0, 0, 0, 0, 0}
-};
-
-/* --- MAPEO DEL DÍGITO 3 (DECIMALES) --- */
-const Digit_Map_t Digit_Digit3 = {
-    .com = {0, 0, 0, 0, 0, 0, 0},
-    .seg = {0, 0, 0, 0, 0, 0, 0}
-};
-
-/* --- MAPEO DEL DÍGITO 4 (DECIMALES) --- */
+/* --- MAPEO DEL DÍGITO 4 (Derecha) --- */
 const Digit_Map_t Digit_Digit4 = {
-    .com = {0, 0, 0, 0, 0, 0, 0},
-    .seg = {0, 0, 0, 0, 0, 0, 0}
+    .com = {0, 1, 2, 3, 0, 1, 2}, // Rellenar: A, B, C, D, E, F, G(3,6)
+    .seg = {5, 5, 5, 5,23, 23,23}  // Rellenar: A, B, C, D, E, F, G
 };
 
-/* --- MAPEO DEL DÍGITO 5 (solo un 1) --- */
-const Digit_Map_t Digit_Digit5 = {
-    .com = {0, 0, 0, 0, 0, 0, 0},
-    .seg = {0, 0, 0, 0, 0, 0, 0}
+/* --- MAPEO DEL DÍGITO 3 (UNIDADES) -Digit_Digit3-- */
+const Digit_Map_t Digit_Digit3 = {
+    .com = { 0, 1, 2, 3, 0, 1, 2, 3},// F(01,6) G(03,23) H(.)(3,6)
+    .seg = {12,12,12,12, 6, 6, 6, 6}
 };
+
+/* --- MAPEO DEL DÍGITO 2 (UNIDADES) ---
+const Digit_Map_t Digit_Units = {
+    .com = { 0, 1, 2, 3, 0, 1, 2},// F(01,6) G(03,23)
+    .seg = {12,12,12,12, 6, 6, 6}
+};  */
+
+/* --- MAPEO DEL DÍGITO 2 (DECIMALES) --- */
+const Digit_Map_t Digit_Digit2 = { // Digit_Digit2
+    .com = { 0, 1, 2, 3, 0, 1, 2, 3}, // H(.)(3,15)
+    .seg = {24,24,24,24,15,15,15,15}
+};
+
+/* --- MAPEO DEL DÍGITO 1 (izq) --- */
+const Digit_Map_t Digit_Digit1 = { // Digit_Digit1
+    .com = { 0,03}, // A(Es solo es numero 1) H(.)(3,25)(1,25) (-)(1,26) (Max)(3,22) (Min)(3,23) (Time)(3,26)
+    .seg = {25,25}
+};
+
 
 /* --- MAPEO DE SÍMBOLOS ESPECIALES --- */
 // Ajusta estos valores según lo que veas (ej. punto decimal, signo menos, grados)
-uint8_t Sym_Point_COM = 0, Sym_Point_SEG = 0; 
+uint8_t Sym_Point_COM = 3, Sym_Point_SEG = 6; // Basado en comentario H(.)(3,6) de Digit3
 uint8_t Sym_Minus_COM = 0, Sym_Minus_SEG = 0;
 uint8_t Sym_Degree_COM = 0, Sym_Degree_SEG = 0;
 
@@ -127,14 +128,18 @@ void LCD_ShowTemp(float temperature) {
 
     // Separar dígitos (ej: 24.5)
     int temp_x10 = (int)(temperature * 10);
+    int hundreds = (temp_x10 / 1000) % 10;
     int tens = (temp_x10 / 100) % 10;
     int units = (temp_x10 / 10) % 10;
     int decimals = temp_x10 % 10;
 
     // Escribir dígitos
-    if (tens > 0) LCD_WriteDigit(&Digit_Tens, tens); // Supresión de cero a la izquierda
-    LCD_WriteDigit(&Digit_Units, units);
-    LCD_WriteDigit(&Digit_Digit3, decimals);
+    // Digit 1: Centenas (Solo si es 1, ya que es un dígito limitado)
+    if (hundreds == 1) LCD_WriteDigit(&Digit_Digit1, 1);
+    
+    if (tens > 0 || hundreds > 0) LCD_WriteDigit(&Digit_Digit2, tens); // Decenas en Digit 2
+    LCD_WriteDigit(&Digit_Digit3, units);    // Unidades en Digit 3
+    LCD_WriteDigit(&Digit_Digit4, decimals); // Decimales en Digit 4
 
     // Símbolos fijos
     LCD_WriteSymbol(Sym_Point_COM, Sym_Point_SEG, 1);   // Punto decimal
@@ -222,15 +227,15 @@ const Digit_Map_t simbols = {
 // --- MAPEO DEL DÍGITO 1 (DECENAS) --- 
 const Digit_Map_t Digit_Tens = {
         // {A, B, C, D, E, F, G
-    .com = {0, 2, 0, 0, 0, 2, 0}, // Rellenar: A, B, C, D, E, F, G (Usar 0 o 2)
-    .seg = {5, 5, 0, 0,23,23, 0}  // Rellenar: A, B, C, D, E, F, G
+    .com = {0, 1, 2, 0, 0, 2, 0}, // Rellenar: A, B, C, D, E, F, G (Usar 0 o 2)
+    .seg = {5, 5, 5, 0,23,23, 0}  // Rellenar: A, B, C, D, E, F, G
 };
 
 // --- MAPEO DEL DÍGITO 2 (UNIDADES) --- 
 const Digit_Map_t Digit_Units = {
         // {A, B, C, D, E, F, G
-    .com = {0, 2, 0, 0, 0, 0, 0},
-    .seg = {0,12, 0, 0, 0, 0, 0}
+    .com = {0, 1, 2, 0, 0, 0, 0},
+    .seg = {0,12, 12, 0, 0, 0, 0}
 };
 
 // --- MAPEO DEL DÍGITO 3 (DECIMALES) --- 
